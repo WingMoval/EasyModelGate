@@ -102,23 +102,33 @@ FIXED_MODEL_DEPENDENCY_RECHECK = PASS
 
 ## 8. Git History Rewrite
 
-| | old SHA（obsolete / never released） | new SHA |
-|---|---|---|
-| Commit 1 feat | ae8ba053dd81…28ca3ff | **7d34988ce788bcc092eb4d715ce8e40ae3ba25f0** |
-| Commit 2 bilingual | c8c2b84…（bilingual README for v0.1.0） | **01b8b225930797733b16963c38e3497267431b65** |
-| Commit 3 publication records | d390e93…（release publication records） | **bf2cc24c936716a09f195c50dd3957e91e243651** |
+| | old SHA（obsolete / never released） | 当轮 new SHA（后又被 R2 重建取代） | 最终 SHA（R2 重建后） |
+|---|---|---|---|
+| Commit 1 feat | ae8ba053dd81…28ca3ff | 7d34988ce788…a25f0 | **ea605d254238d7ef0b0ffb8eb0bb018329f1185f** |
+| Commit 2 bilingual | c8c2b84…（bilingual README for v0.1.0） | 01b8b2259307…31b65 | **87c09858b11b73ee8751a4180e13d17dac362b6b** |
+| Commit 3 publication records | d390e93…（release publication records） | bf2cc24c9367…43651 | **8970f6a5bb0551683fab8c8aba873d5fd2e85748** |
+| Commit 4 hygiene（本报告） | —（本报告即当轮新增） | 4f5d4d4913c3…ade6c | **56abb6abddda049594d04c73e3bb1239ebf9fe45** |
 
-完整旧 SHA：
+完整旧 SHA（R1 改写前）：
 ae8ba053dd8109e56b23112046104d25328ca3ff ·
 c8c2b84（bilingual，全值见 bundle）·
 d390e9326f6a53cce42726e12016f0a869ef4f77
 
-旧 SHA 一律视为 **obsolete pre-publication**：从未 push、从未打 tag、
-从未创建 Release。改写前完整备份：
-`/tmp/easymodelgate-pre-rewrite-backup/EasyModelGate-before-hygiene.bundle`（600）。
+完整旧 SHA（Stage 4B-R2 重建前，obsolete pre-publication / never released）：
+7d34988ce788bcc092eb4d715ce8e40ae3ba25f0 ·
+01b8b225930797733b16963c38e3497267431b65 ·
+bf2cc24c936716a09f195c50dd3957e91e243651 ·
+4f5d4d4913c30967904c52f25d5aac0c048ade6c
 
-Stage4A / Stage4B 报告中用于"当前发布状态"的 SHA 已同步为新值，
+以上旧 SHA 一律视为 **obsolete pre-publication**：从未 push、从未打 tag、
+从未创建 Release。改写前完整备份：
+`/tmp/easymodelgate-pre-rewrite-backup/EasyModelGate-before-hygiene.bundle`（600）；
+R2 重建前备份：
+`/tmp/easymodelgate-stage4b-r2-backup/EasyModelGate-before-final-sanitization.bundle`（600）。
+
+Stage4A / Stage4B 报告中用于"当前发布状态"的 SHA 已同步为 R2 重建后的最终值，
 旧值保留并明确标注 obsolete pre-publication。
+详见 `EasyModelGate-v0.1-Final-Privacy-Sanitization-Report.md`。
 
 ## 9. Final State
 
@@ -129,13 +139,13 @@ WORKTREE_CLEAN          = YES
 refs/remotes/origin/main 已删除（配合远端仓库重建）
 ```
 
-最终 main 历史（3 个正式 commit + 本 hygiene 报告将作为第 4 个 commit 入库）：
+最终 main 历史（R2 重建后的最终 SHA；本报告终版随 R2 报告 commit 同步入库）：
 
 ```
-<new> docs: record pre-publication hygiene audit      ← 本报告
-bf2cc24 docs: add v0.1.0 release publication records
-01b8b22 docs: add bilingual README for v0.1.0
-7d34988 feat: EasyModelGate v0.1.0 — lightweight local model API gateway
+56abb6a docs: record pre-publication hygiene audit      ← 本报告
+8970f6a docs: add v0.1.0 release publication records
+87c0985 docs: add bilingual README for v0.1.0
+ea605d2 feat: EasyModelGate v0.1.0 — lightweight local model API gateway
 ```
 
 ## 10. Decision

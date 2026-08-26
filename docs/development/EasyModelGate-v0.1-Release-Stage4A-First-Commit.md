@@ -45,10 +45,12 @@ logs/、.env、OpenCode 配置类路径 → **PASS**。
 ## 5. First Commit
 
 ```
-SHA（current）                    = 7d34988ce788bcc092eb4d715ce8e40ae3ba25f0
-                                     （pre-publication hygiene 历史改写后的当前 FIRST_COMMIT_SHA）
+SHA（current）                    = ea605d254238d7ef0b0ffb8eb0bb018329f1185f
+                                     （Stage 4B-R2 最终隐私脱敏历史重建后的当前 FIRST_COMMIT_SHA）
 SHA（obsolete pre-publication）   = ae8ba053dd8109e56b23112046104d25328ca3ff
-                                     （改写前旧值；从未 push / 打 tag / Release）
+                                     （pre-publication hygiene 改写前旧值；从未 push / 打 tag / Release）
+                                  = 7d34988ce788bcc092eb4d715ce8e40ae3ba25f0
+                                     （pre-publication hygiene 改写后、R2 重建前旧值；同样从未 push / 打 tag / Release）
 message  = feat: EasyModelGate v0.1.0 — lightweight local model API gateway
 统计（current） = 120 files changed, 11295 insertions(+)
                    （移除两个无价值实验日志后的 root 提交规模；

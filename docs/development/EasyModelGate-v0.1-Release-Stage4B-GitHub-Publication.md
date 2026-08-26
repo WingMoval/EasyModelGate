@@ -115,19 +115,22 @@ REMOTE_SECRET_CHECK = PENDING
 
 ## 12. Final Git History
 
-预期四 commit 形态：
+四 commit 形态（Stage 4B-R2 最终隐私脱敏历史重建后的最终 SHA）：
 
 ```
-7d34988 feat: EasyModelGate v0.1.0 — lightweight local model API gateway
-         （注：ae8ba05 / c8c2b84 / d390e93 为 obsolete pre-publication SHA，
-           pre-publication hygiene 历史改写前旧值，从未 push / Release）
-<SHA2>  docs: add bilingual README for v0.1.0
-<SHA3>  docs: add v0.1.0 release publication records   ← v0.1.0 tag 指向此处
-<SHA4>  docs: finalize v0.1.0 publication report       （tag 之后追加）
+ea605d2 feat: EasyModelGate v0.1.0 — lightweight local model API gateway
+87c0985 docs: add bilingual README for v0.1.0
+8970f6a docs: add v0.1.0 release publication records   ← 预打 tag 位置（尚未创建）
+56abb6a docs: record pre-publication hygiene audit
 ```
+
+注：ae8ba05 / c8c2b84 / d390e93（hygiene 改写前）与
+7d34988 / 01b8b22 / bf2cc24 / 4f5d4d4（R2 重建前）均为
+obsolete pre-publication SHA，从未 push / 打 tag / Release。
 
 当前实际进度：commit1 ✅ · commit2 ✅ · commit3 ✅（本文件与 Stage4A 报告）·
-commit4 待发布结果回填。
+commit4（hygiene 报告）✅ · R2 后新增 commit5（Final Privacy Sanitization Report）。
+GitHub 远端当前为空仓库，push / tag / Release 均在 Stage 4B-R3 人工审核后执行。
 
 ## 13. Final Main CI
 
