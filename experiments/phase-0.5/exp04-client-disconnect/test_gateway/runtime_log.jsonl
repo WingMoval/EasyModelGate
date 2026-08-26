@@ -1,0 +1,9 @@
+{"ts": 1787677317.687174, "side": "gateway", "event": "relay_started", "request_id": "case-cancel"}
+{"ts": 1787677317.6914804, "side": "gateway", "event": "upstream_status", "request_id": "case-cancel", "extra": {"status": 200}}
+{"ts": 1787677317.6925116, "side": "gateway", "event": "chunk_relayed", "request_id": "case-cancel", "extra": {"bytes": 48}}
+{"ts": 1787677318.691807, "side": "gateway", "event": "chunk_relayed", "request_id": "case-cancel", "extra": {"bytes": 48}}
+{"ts": 1787677319.6925745, "side": "gateway", "event": "chunk_relayed", "request_id": "case-cancel", "extra": {"bytes": 48}}
+{"ts": 1787677320.6944287, "side": "gateway", "event": "chunk_relayed", "request_id": "case-cancel", "extra": {"bytes": 48}}
+{"ts": 1787677321.6955423, "side": "gateway", "event": "chunk_relayed", "request_id": "case-cancel", "extra": {"bytes": 48}}
+{"ts": 1787677321.6983087, "side": "gateway", "event": "client_disconnect_detected", "request_id": "case-cancel"}
+{"ts": 1787677321.6984665, "side": "gateway", "event": "upstream_aclosed", "request_id": "case-cancel"}

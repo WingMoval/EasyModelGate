@@ -1,0 +1,12 @@
+# EasyModelGate v0.1 依赖冻结清单（规格 §七）
+# 安装：pip install -r requirements.txt
+fastapi==0.141.1
+starlette==1.6.0
+httpx==0.28.1
+uvicorn==0.52.4
+aiosqlite==0.22.1
+pydantic==2.13.4
+
+# 开发/测试
+pytest==9.1.1
+pytest-asyncio==1.4.0

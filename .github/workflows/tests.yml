@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (frozen)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run test suite (fake upstream only, no GPU / no real llama.cpp)
+        run: pytest -q
+
+      - name: Upload test summary on failure
+        if: failure()
+        run: |
+          echo "::error::pytest failed — see logs above"

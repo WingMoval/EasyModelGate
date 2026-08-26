@@ -1,0 +1,8 @@
+{"ts": 1787677317.6900883, "side": "upstream", "event": "request_accepted", "detail": {"request_id": "case-cancel", "duration": 60}}
+{"ts": 1787677317.6908863, "side": "upstream", "event": "chunk_generated", "detail": {"request_id": "case-cancel", "seq": 0}}
+{"ts": 1787677318.6915662, "side": "upstream", "event": "chunk_generated", "detail": {"request_id": "case-cancel", "seq": 1}}
+{"ts": 1787677319.6923144, "side": "upstream", "event": "chunk_generated", "detail": {"request_id": "case-cancel", "seq": 2}}
+{"ts": 1787677320.694181, "side": "upstream", "event": "chunk_generated", "detail": {"request_id": "case-cancel", "seq": 3}}
+{"ts": 1787677321.6952527, "side": "upstream", "event": "chunk_generated", "detail": {"request_id": "case-cancel", "seq": 4}}
+{"ts": 1787677321.6982608, "side": "upstream", "event": "cancelled_error", "detail": {"request_id": "case-cancel"}}
+{"ts": 1787677321.6983948, "side": "upstream", "event": "generator_finally_connection_closed", "detail": {"request_id": "case-cancel"}}

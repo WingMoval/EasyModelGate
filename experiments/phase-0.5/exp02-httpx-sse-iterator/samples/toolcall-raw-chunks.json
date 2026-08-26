@@ -1,0 +1,96 @@
+{
+  "mode": "raw",
+  "http_status": 200,
+  "content_type": "text/event-stream",
+  "content_encoding": "none",
+  "chunk_count": 8,
+  "records": [
+    {
+      "seq": 1,
+      "len": 259,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"c",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 2,
+      "len": 360,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 3,
+      "len": 291,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 4,
+      "len": 285,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 5,
+      "len": 282,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 6,
+      "len": 281,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 7,
+      "len": 780,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"delta\":{}}],\"created\"",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 2,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 8,
+      "len": 14,
+      "head_80": "data: [DONE]\\n\\n",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    }
+  ],
+  "final_incomplete_event_bytes": 0,
+  "final_incomplete_repr": "",
+  "chunks_containing_multiple_events": [
+    7
+  ],
+  "chunks_continuing_split_event": [],
+  "chunks_ending_mid_event": []
+}

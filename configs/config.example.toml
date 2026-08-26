@@ -1,0 +1,40 @@
+# EasyModelGate 配置模板（v0.1，规格 §九）
+# 复制为 configs/config.toml 后修改；环境变量 EMG_<段>_<字段> 可覆盖，
+# 例如 EMG_SERVER_PORT=3001、EMG_DATABASE_PATH=data/prod.db。
+# 敏感信息（upstream key）不放本文件：用 configs/upstream_key 文件或
+# 环境变量 EMG_UPSTREAM_API_KEY。
+
+[server]
+host = "127.0.0.1"
+port = 3000
+
+[database]
+path = "data/easymodelgate.db"
+
+[upstream]
+base_url = "http://127.0.0.1:8080"
+# upstream API Key 文件路径（chmod 600）；文件不存在且未设环境变量时，
+# 视为上游无鉴权（不发送 Authorization）。
+api_key_file = "configs/upstream_key"
+# 对应 llama.cpp --parallel 槽位数
+slots = 1
+
+[timeouts]
+connect = 5.0
+write = 60.0
+# read 为空表示不限制（流式推理必需），由 total_request 兜底
+read = 0          # 0 表示 None
+pool = 10.0
+# 覆盖 排队+upstream+streaming 的总生命周期 deadline
+total_request = 1800.0
+# 等待 upstream slot 的上限；超时返回 503 server_busy
+queue_timeout = 120.0
+
+[security]
+key_prefix = "emg_"
+
+[usage]
+timezone = "Asia/Shanghai"
+
+[limits]
+max_client_concurrency = 64

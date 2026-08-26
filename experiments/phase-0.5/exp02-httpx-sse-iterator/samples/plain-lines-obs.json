@@ -1,0 +1,69 @@
+{
+  "mode": "lines",
+  "http_status": 200,
+  "content_type": "text/event-stream",
+  "content_encoding": "none",
+  "chunk_count": 10,
+  "records": [
+    {
+      "seq": 1,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":nu'",
+      "is_blank": false
+    },
+    {
+      "seq": 2,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 3,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"content\":\"hello\"}}],\"created\":'",
+      "is_blank": false
+    },
+    {
+      "seq": 4,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 5,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":1787676591,\"id\"'",
+      "is_blank": false
+    },
+    {
+      "seq": 6,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 7,
+      "repr_head": "'data: {\"choices\":[],\"created\":1787676591,\"id\":\"chatcmpl-wqXuFDriJNJM3TAeetDPVNBn0FzxdZC2\",'",
+      "is_blank": false
+    },
+    {
+      "seq": 8,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 9,
+      "repr_head": "'data: [DONE]'",
+      "is_blank": false
+    },
+    {
+      "seq": 10,
+      "repr_head": "''",
+      "is_blank": true
+    }
+  ],
+  "final_incomplete_event_bytes": 0,
+  "final_incomplete_repr": "",
+  "lines_summary": {
+    "total_lines": 10,
+    "blank_lines": 5,
+    "data_lines": 5,
+    "done_seen": true,
+    "usage_line_seq": 7
+  },
+  "tool_call_fragments": []
+}

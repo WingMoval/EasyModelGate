@@ -1,0 +1,31 @@
+# EasyModelGate — 用户级 systemd 模板
+# 用法：替换 {{PROJECT_ROOT}} / {{PYTHON_BIN}} 后复制到
+#       ~/.config/systemd/user/easymodelgate.service
+# 然后：systemctl --user daemon-reload && systemctl --user enable --now easymodelgate
+#
+# 开机自启需要启用 linger（否则用户管理器不随开机启动）：
+#   sudo loginctl enable-linger <你的用户名>
+
+[Unit]
+Description=EasyModelGate Lightweight Local Model API Gateway
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory={{PROJECT_ROOT}}
+# 启动前等待上游模型服务健康（按需修改 URL 或删除此行）
+ExecStartPre=/bin/sh -c 'i=0; until curl -sf -m 2 {{UPSTREAM_HEALTH_URL}} >/dev/null 2>&1; do i=$((i+1)); [ $i -gt 60 ] && { echo "upstream not ready"; exit 1; }; sleep 2; done'
+ExecStart={{PYTHON_BIN}} -m easymodelgate --config configs/config.toml serve
+
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+# 低风险加固（可选）
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=default.target

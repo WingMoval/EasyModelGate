@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "easymodelgate"
+version = "0.1.0"
+description = "EasyModelGate — Lightweight Local Model API Gateway"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi==0.141.1",
+    "starlette==1.6.0",
+    "httpx==0.28.1",
+    "uvicorn==0.52.4",
+    "aiosqlite==0.22.1",
+    "pydantic==2.13.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+]
+
+[project.scripts]
+easymodelgate = "easymodelgate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["easymodelgate*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

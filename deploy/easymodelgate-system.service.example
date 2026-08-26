@@ -1,0 +1,37 @@
+# EasyModelGate — 系统级 systemd 模板（需 root/sudo 安装到
+# /etc/systemd/system/easymodelgate.service）
+#
+# 必须由用户自行替换以下占位符：
+#   {{PROJECT_ROOT}}                项目绝对路径
+#   {{PYTHON_BIN}}                  micromamba/venv 内 python 绝对路径
+#   {{RUN_USER}}                    运行服务的普通用户
+#   {{UPSTREAM_SYSTEMD_SERVICE}}    上游服务名，例如 llama-server.service；
+#                                   若上游无 systemd 服务，删除 Requires 行
+#   {{PROJECT_MOUNT_PATH}}          项目所在挂载点；不在独立挂载盘则删除该行
+#
+# 注意：本模板中的占位符不是作者服务器路径。
+
+[Unit]
+Description=EasyModelGate Lightweight Local Model API Gateway
+After=network-online.target {{UPSTREAM_SYSTEMD_SERVICE}}
+Requires={{UPSTREAM_SYSTEMD_SERVICE}}
+RequiresMountsFor={{PROJECT_MOUNT_PATH}}
+
+[Service]
+Type=simple
+User={{RUN_USER}}
+WorkingDirectory={{PROJECT_ROOT}}
+ExecStartPre=/bin/sh -c 'i=0; until curl -sf -m 2 {{UPSTREAM_HEALTH_URL}} >/dev/null 2>&1; do i=$((i+1)); [ $i -gt 60 ] && { echo "upstream not ready"; exit 1; }; sleep 2; done'
+ExecStart={{PYTHON_BIN}} -m easymodelgate --config configs/config.toml serve
+
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=false
+
+[Install]
+WantedBy=multi-user.target

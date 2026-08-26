@@ -1,0 +1,145 @@
+{
+  "mode": "lines",
+  "http_status": 200,
+  "content_type": "text/event-stream",
+  "content_encoding": "none",
+  "chunk_count": 18,
+  "records": [
+    {
+      "seq": 1,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":nu'",
+      "is_blank": false
+    },
+    {
+      "seq": 2,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 3,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"'",
+      "is_blank": false
+    },
+    {
+      "seq": 4,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 5,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"funct'",
+      "is_blank": false
+    },
+    {
+      "seq": 6,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 7,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"funct'",
+      "is_blank": false
+    },
+    {
+      "seq": 8,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 9,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"funct'",
+      "is_blank": false
+    },
+    {
+      "seq": 10,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 11,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"funct'",
+      "is_blank": false
+    },
+    {
+      "seq": 12,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 13,
+      "repr_head": "'data: {\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"delta\":{}}],\"created\":178767659'",
+      "is_blank": false
+    },
+    {
+      "seq": 14,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 15,
+      "repr_head": "'data: {\"choices\":[],\"created\":1787676599,\"id\":\"chatcmpl-rkOE6vLhDdDzqtIGq3xNzWneDg93rDW1\",'",
+      "is_blank": false
+    },
+    {
+      "seq": 16,
+      "repr_head": "''",
+      "is_blank": true
+    },
+    {
+      "seq": 17,
+      "repr_head": "'data: [DONE]'",
+      "is_blank": false
+    },
+    {
+      "seq": 18,
+      "repr_head": "''",
+      "is_blank": true
+    }
+  ],
+  "final_incomplete_event_bytes": 0,
+  "final_incomplete_repr": "",
+  "lines_summary": {
+    "total_lines": 18,
+    "blank_lines": 9,
+    "data_lines": 9,
+    "done_seen": true,
+    "usage_line_seq": 15
+  },
+  "tool_call_fragments": [
+    {
+      "line_seq": 3,
+      "index": 0,
+      "id": "09gf1fg2ZlMBaQRYyGn7IkG4Iyg47cEQ",
+      "name": "get_weather",
+      "args_fragment": "{"
+    },
+    {
+      "line_seq": 5,
+      "index": 0,
+      "id": null,
+      "name": null,
+      "args_fragment": "\"city\":\""
+    },
+    {
+      "line_seq": 7,
+      "index": 0,
+      "id": null,
+      "name": null,
+      "args_fragment": "Paris"
+    },
+    {
+      "line_seq": 9,
+      "index": 0,
+      "id": null,
+      "name": null,
+      "args_fragment": "\""
+    },
+    {
+      "line_seq": 11,
+      "index": 0,
+      "id": null,
+      "name": null,
+      "args_fragment": "}"
+    }
+  ]
+}

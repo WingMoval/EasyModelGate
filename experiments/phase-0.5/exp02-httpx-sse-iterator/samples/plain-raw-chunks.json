@@ -1,0 +1,47 @@
+{
+  "mode": "raw",
+  "http_status": 200,
+  "content_type": "text/event-stream",
+  "content_encoding": "none",
+  "chunk_count": 3,
+  "records": [
+    {
+      "seq": 1,
+      "len": 502,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":null,\"index\":0,\"delta\":{\"role\":\"assistant\",\"c",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 2,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 2,
+      "len": 765,
+      "head_80": "data: {\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"delta\":{}}],\"created\":17876",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 2,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    },
+    {
+      "seq": 3,
+      "len": 14,
+      "head_80": "data: [DONE]\\n\\n",
+      "utf8_standalone": true,
+      "continued_from_prev_chunk": false,
+      "events_completed_here": 1,
+      "partial_tail_after": false,
+      "utf8_incremental_ok": true
+    }
+  ],
+  "final_incomplete_event_bytes": 0,
+  "final_incomplete_repr": "",
+  "chunks_containing_multiple_events": [
+    1,
+    2
+  ],
+  "chunks_continuing_split_event": [],
+  "chunks_ending_mid_event": []
+}

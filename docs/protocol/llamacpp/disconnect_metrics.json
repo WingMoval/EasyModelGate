@@ -1,0 +1,32 @@
+{
+  "case_normal": {
+    "chunks_received": 4,
+    "done_seen": true,
+    "wall_ms": 3035,
+    "gateway_finished_normally": true,
+    "upstream_completed_normally": true,
+    "no_disconnect_events": true,
+    "req_log_entry": {
+      "ts": 1787677316.1650777,
+      "request_id": "case-normal",
+      "started_at": 1787677312.1408112,
+      "error_type": null
+    }
+  },
+  "case_cancel": {
+    "T_client_disconnect": 1787677321.6962159,
+    "T_gateway_detected": 1787677321.6983087,
+    "T_upstream_aclosed": 1787677321.6984665,
+    "T_fake_upstream_stopped": 1787677321.6982608,
+    "gateway_detection_ms": 2,
+    "upstream_close_ms": 0,
+    "total_disconnect_propagation_ms": 2,
+    "chain_complete": true,
+    "post_disconnect_req_log": {
+      "ts": 1787677322.6991422,
+      "request_id": "case-cancel",
+      "started_at": 1787677317.6871722,
+      "error_type": "client_disconnected"
+    }
+  }
+}

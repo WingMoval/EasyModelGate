@@ -1,0 +1,14 @@
+{
+  "http_smoke": {
+    "status_code": 200,
+    "body": {
+      "status": "ok"
+    }
+  },
+  "sqlite_smoke": {
+    "sqlite_lib_version": "3.53.2",
+    "journal_mode": "wal",
+    "reopened_select_value": "hello",
+    "journal_mode_after_reopen": "wal"
+  }
+}

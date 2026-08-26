@@ -1,0 +1,30 @@
+# ---- EasyModelGate 本地数据与敏感信息（禁止入库）----
+data/
+logs/
+*.db
+*.db-wal
+*.db-shm
+configs/upstream_key
+configs/config.toml
+
+# 密钥与备份类
+.env
+.env.*
+*.bak
+*.backup
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+.DS_Store
+# 实验运行日志不入库
+*.log
