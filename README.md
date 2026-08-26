@@ -1,190 +1,176 @@
 # EasyModelGate
 
-EasyModelGate v0.1.0
+English | [简体中文](README.zh-CN.md)
 
-EasyModelGate — Lightweight Local Model API Gateway
+A lightweight API gateway for local OpenAI-compatible model servers,
+officially validated with **llama.cpp**.
 
-中文：EasyModelGate：轻量级本地模型 API 网关
+## Overview
 
-## 项目简介
-
-EasyModelGate 是放在**客户端**与**本地模型服务器**之间的一层轻量 API Gateway。
-它不加载模型、不管理 CUDA/GPU、不负责编译 llama.cpp；
-只负责：API Key 鉴权、限流、排队、Usage 统计、请求日志、Analytics、
-Streaming 与 Tool Calling 的透明转发。
-
-## 目标链路（架构）
+EasyModelGate sits between clients such as OpenCode and a local
+llama.cpp server. It does not load models or manage GPUs — it adds the
+operational layer that a bare model server lacks:
 
 ```
 OpenCode / OpenAI-compatible Client
-                 ↓
-          EasyModelGate :3000
-                 ↓
-       API Key / 限流 / 排队
-                 ↓
-       Usage / 日志 / Analytics
-                 ↓
-          llama.cpp :8080
-                 ↓
-             Qwen3.8
+        ↓
+EasyModelGate  (:3000)
+        ↓
+llama.cpp server  (:8080)
+        ↓
+Local Model (Qwen etc.)
 ```
 
-核心原则：**透明代理优先**。网关不理解、不修改模型内容与 Tool Calling，
-只负责鉴权、安全、限流、排队、上游访问、透明转发、请求日志与用量统计。
+Core principle: **transparent proxy first**. EasyModelGate never modifies
+model output or Tool Calling content. Streaming SSE and Tool Calling
+arguments are relayed byte-exact.
 
-## 当前状态
+## Why EasyModelGate
 
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| Phase 0 | 同类项目技术调研 | 已完成（PASS） |
-| Phase 0.5 | 协议与环境专项实测（5 项实验） | 已完成（PASS） |
-| **Phase 1** | 项目骨架 + 环境 + 文档 + Schema | **已实现** |
-| **Phase 2** | Security + User/Key CLI | **已实现** |
-| **Phase 3** | /health + /v1/models | **已实现** |
-| Phase 4 | Non-stream Chat Proxy | 已实现 |
-| Phase 5 | Streaming + SSE Scanner | 已实现 |
-| Phase 6 | Disconnect + Request Logging | 已实现 |
-| Phase 7 | Tool Calling 保真测试 | 已实现 |
-| Phase 8 | Semaphore + Queue Metrics | 已实现 |
-| Phase 9 | Usage + cached_tokens + TTFT | 计划 |
-| Phase 10 | Analytics | 计划 |
-| Phase 11 | RPM + Soft Token Quota | 计划 |
-| Phase 13 | 真实 OpenCode 集成测试 | 计划 |
-| Phase 14 | systemd 部署 | 计划 |
+Connecting straight to a local model server leaves you without:
 
-冻结规格：`docs/specifications/EasyModelGate-v0.1-Final-Specification.md`
+- authentication
+- per-key rate limiting
+- queueing with visibility (`queue_wait_ms`)
+- token usage accounting (incl. `cached_tokens`)
+- request observability (status / duration / TTFT / upstream status)
+- quota control
+- client-disconnect propagation to stop wasted GPU inference
 
-## 系统要求
+EasyModelGate adds all of the above **without modifying model protocol
+content**.
 
-- Linux + Python **3.12**（推荐 micromamba 管理；非必须依赖）
-- 上游：任何 OpenAI-compatible 服务（正式验证对象为 llama.cpp server）
-- EasyModelGate 不负责：下载模型、加载 GGUF、安装 CUDA、编译 llama.cpp、GPU 调度
+## Features
 
-## 快速开始
+- API Key authentication (`emg_` keys, SHA-256 hash storage, show-once)
+- OpenAI-compatible proxy (`/v1/chat/completions`, `/v1/models`, `/health`)
+- Non-streaming and Streaming support
+- Byte-preserving SSE relay with read-only incremental scanner
+- Tool Calling passthrough (zero concatenation, zero re-serialization)
+- Client Disconnect cancellation (propagated to upstream)
+- Concurrency queue via configurable slots semaphore
+- Metrics: `queue_wait_ms`, `upstream_duration_ms`, `ttft_ms`
+- Usage: prompt / completion / total tokens + `cached_tokens`
+- RPM limiting (in-memory fixed window)
+- Soft Token Quota per key
+- CLI management: users / keys / usage analytics
+- Usage Analytics: hour / day / ISO week / month / custom ranges
+- SQLite persistence (WAL) with schema v1
+- systemd deployment templates (user & system level)
+
+## Architecture
+
+EasyModelGate does not load models itself.
+It forwards requests to an upstream llama.cpp OpenAI-compatible API and
+relays responses byte-exact while observing them side-band for metrics.
+See [docs/decisions](docs/decisions/) for design rationale
+(SSE relay, disconnect propagation, key storage).
+
+## Requirements
+
+- Linux
+- Python 3.12
+- A running llama.cpp server exposing an OpenAI-compatible API
+
+micromamba is recommended for environment management but is not a hard
+dependency of the program itself.
+
+EasyModelGate does **not**: download models, load GGUF files,
+install CUDA/NVIDIA drivers, schedule GPUs, or compile llama.cpp.
+
+## Quick Start
 
 ```bash
-# 0) 获取代码
-git clone https://github.com/<you>/EasyModelGate.git
+# Get the code
+git clone https://github.com/WingMoval/EasyModelGate.git
 cd EasyModelGate
 
-# 1) 创建 Python 环境（micromamba 推荐，venv 亦可）
-micromamba create -y -n easymodelgate-dev python=3.12.13
-$HOME/micromamba/envs/easymodelgate-dev/bin/pip install -r requirements.txt
+# Create a Python 3.12 environment
+micromamba create -y -n easymodelgate python=3.12.13
+$HOME/micromamba/envs/easymodelgate/bin/pip install -r requirements.txt
 
-# 2) 准备配置与上游密钥
-cp configs/config.example.toml configs/config.toml   # 按需修改
-# upstream key 写入 configs/upstream_key（chmod 600），
-# 或使用环境变量 EMG_UPSTREAM_API_KEY
+# Configure
+cp configs/config.example.toml configs/config.toml   # edit base_url / port
 
-# 3) 初始化用户与 Key
-PY=$HOME/micromamba/envs/easymodelgate-dev/bin/python
+# Upstream secret (pick one; skip if your llama-server has no --api-key)
+echo <key> > configs/upstream_key && chmod 600 configs/upstream_key
+# or: export EMG_UPSTREAM_API_KEY=<key>
+
+# Create a user and an API key (the full key is shown exactly once)
+PY=$HOME/micromamba/envs/easymodelgate/bin/python
 $PY -m easymodelgate --config configs/config.toml user create --username alice
 $PY -m easymodelgate --config configs/config.toml key create --user alice \
-    --name laptop --rpm 60        # 完整 Key 仅此次展示
+    --name laptop
 
-# 4) 启动服务
+# Start the gateway (default :3000)
 $PY -m easymodelgate --config configs/config.toml serve
 
-# 5) 验证
+# Verify
 curl http://127.0.0.1:3000/health
-curl -H "Authorization: Bearer emg_xxx..." http://127.0.0.1:3000/v1/models
+curl http://127.0.0.1:3000/v1/models -H "Authorization: Bearer emg_xxx"
+curl http://127.0.0.1:3000/v1/chat/completions \
+     -H "Authorization: Bearer emg_xxx" -H "Content-Type: application/json" \
+     -d '{"model":"<upstream-model>","messages":[{"role":"user","content":"hi"}]}'
 ```
 
-## 配置
+## OpenCode Integration
 
-TOML 文件（`configs/config.toml`，模板见 `configs/config.example.toml`）+
-环境变量覆盖（`EMG_<段>_<字段>`，如 `EMG_SERVER_PORT=3001`）。
-
-| 段 | 字段 | 说明 |
-|---|---|---|
-| server | host / port | 监听地址端口 |
-| database | path | SQLite 路径（WAL 自动启用） |
-| upstream | base_url / api_key_file / slots | 上游地址、密钥文件路径、并发槽位（对应 --parallel） |
-| timeouts | connect / write / read / pool / total_request | 冻结值 5/60/None/10/1800 秒 |
-| security | key_prefix | 客户端 Key 前缀（默认 emg_） |
-| usage | timezone | 统计分桶时区（默认 Asia/Shanghai） |
-| limits | max_client_concurrency | 网关最大并发连接 |
-
-敏感信息不进配置文件：upstream key 只放 `configs/upstream_key`（chmod 600）
-或环境变量 `EMG_UPSTREAM_API_KEY`。
-
-## API
-
-| 方法 | 路径 | 鉴权 | 状态 |
-|---|---|---|---|
-| GET | /health | 无 | 已实现 |
-| GET | /v1/models | Bearer emg_ key | 已实现 |
-| POST | /v1/chat/completions | Bearer emg_ key | 已实现（透明代理：non-stream + streaming + tool calling） |
-
-错误统一 OpenAI-compatible 信封：
-`{"error":{"message","type","param","code"}}`。
-
-## CLI
+Point an OpenCode provider at the gateway:
 
 ```
-python -m easymodelgate user create|list|disable|enable
-python -m easymodelgate key  create|list|disable|enable
-python -m easymodelgate usage summary [--period today|yesterday|24h|7d|week|month|all]
-                                      [--from ... --to ...] [--group-by hour|day|week|month|none]
-                                      [--user U] [--key PREFIX] [--model M]
-python -m easymodelgate serve [--config PATH]
+baseURL = http://127.0.0.1:3000/v1
+apiKey  = emg_...
 ```
 
-完整 Key 仅在 `key create` 时 stdout 展示一次。
+Keep a second provider pointing directly at llama.cpp as an instant
+rollback path — switching back requires no client changes beyond the
+provider selection.
 
-## 测试
+## Testing
 
 ```bash
-python -m pytest -q        # 当前基线：118 passed
+python -m pytest -q
 ```
 
-覆盖：Auth、Non-stream、Streaming/SSE 字节保真、Tool Calling、Client Disconnect、
-Queue/RPM/Quota、Usage、Analytics、SQLite 持久化。
-大部分测试使用内置 fake upstream，**无需 GPU**。
+Current v0.1.0 baseline: **118 passed**.
+The automated test suite uses a programmable fake upstream and does not
+require a GPU or a real llama.cpp process.
 
-## 已知限制
+## Security
 
-- v0.1 正式验证的 backend 为 llama.cpp；其它 OpenAI-compatible 服务未做兼容保证
-- RPM 为单实例内存 Fixed Window，进程重启后窗口清零
-- Token Quota 为软额度（允许单次请求超出后再拒绝），不做额度预留
-- `/v1/models` 不计 RPM / Token Quota
-- Web Dashboard 与 Admin HTTP API 尚未实现（计划 v0.2）
-- 不包含多机部署 / 高可用
+- Plaintext user keys are never stored in SQLite (SHA-256 hash only)
+- The complete key is shown only once at creation
+- The upstream secret lives in a separate file (`chmod 600`) or env var
+- Logs do not store prompts / responses / reasoning / tool arguments
+- Error envelopes never contain key material or request bodies
 
-## 设计边界（重要）
+## Known Limitations
 
-- `/v1/models` 不计 RPM / Token Quota（仅 chat 端点限流）
-- Token Quota 为 **Soft Quota**：不预留额度，允许单次请求超出后拒绝后续请求
-- RPM 为进程内 Fixed Window（60s），**服务重启后窗口清零**
-- Usage Analytics 仅提供 CLI（无 Admin HTTP API）
-- Admin HTTP API / Web Dashboard 尚未实现（v0.2 计划）
+- llama.cpp is the officially validated backend; other
+  OpenAI-compatible services are not covered by the v0.1 compatibility
+  guarantee
+- RPM is single-instance in-memory fixed window
+- The RPM window resets when the process restarts
+- Token Quota is soft (a request may overshoot before later ones are
+  rejected); no reservation mechanism
+- `/v1/models` is exempt from RPM / Token Quota
+- No Admin HTTP API
+- No Web Dashboard
+- No HA
+- No multi-node clustering
 
-## 安全原则
+## Documentation
 
-- SQLite 只存 `key_prefix` 与 `key_hash`（SHA-256），完整 Key 不落库
-- 完整 Key 仅创建时展示一次；日志一律脱敏（`emg_abcd****wxyz`）
-- 日志禁止出现 Authorization 头、完整 Key、prompt/response 内容
-- request_logs 不保存任何用户内容（强制隐私原则）
-- upstream 密钥独立文件存储（chmod 600），优先级：环境变量 > 文件
-
-## 开发状态
-
-Phase 1-14 全部完成：118 项自动测试全绿 · OpenCode A/B 八场景 PASS ·
-systemd 长驻部署（用户级 unit，开机自启需运维执行 enable-linger，见部署文档）；chat 代理（non-stream/streaming/
-tool calling/断连保护）已上线并通过真实 llama.cpp 验证。
-Phase 8 及以后各阶段均已通过对应 Checkpoint 审核。
-
-## 文档索引
-
-- 冻结规格：docs/specifications/EasyModelGate-v0.1-Final-Specification.md
-- Phase 0 调研：docs/research/EasyModelGate-v0.1-Phase0-Technical-Research.md
-- Phase 0.5 实验：experiments/phase-0.5/REPORT.md
-- 协议样本：docs/protocol/llamacpp/
-- 架构决策记录：docs/decisions/
-- 数据库设计说明：docs/development/schema-design.md
-- 阶段报告：docs/development/
+| Content | Path |
+|---|---|
+| Deployment guide (systemd) | docs/deployment/EasyModelGate-v0.1-Deployment.md |
+| Frozen specification | docs/specifications/EasyModelGate-v0.1-Final-Specification.md |
+| Design decisions | docs/decisions/ |
+| Real protocol samples | docs/protocol/llamacpp/ |
+| Stage reports | docs/development/ |
+| Release notes | docs/releases/ |
+| Experiments | experiments/phase-0.5/ |
 
 ## License
 
-Apache License 2.0（见 LICENSE）。仅学习参考项目的接口行为与设计思想，
-未复制任何 AGPL 项目代码。
+Apache License 2.0
