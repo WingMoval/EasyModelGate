@@ -164,6 +164,7 @@ Gateway 出现异常时切换回直连即可，客户端无需其它改动。
 
 | 内容 | 路径 |
 |---|---|
+| **用户使用手册（完整 CLI 操作流程）** | **docs/USER_GUIDE.zh-CN.md** |
 | 快速开始 / 配置 / CLI | 本文件 |
 | 部署（systemd） | docs/deployment/EasyModelGate-v0.1-Deployment.md |
 | 冻结规格 | docs/specifications/EasyModelGate-v0.1-Final-Specification.md |

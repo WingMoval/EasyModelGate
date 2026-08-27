@@ -163,6 +163,7 @@ require a GPU or a real llama.cpp process.
 
 | Content | Path |
 |---|---|
+| **User Guide (Chinese, CLI walkthrough)** | **docs/USER_GUIDE.zh-CN.md** |
 | Deployment guide (systemd) | docs/deployment/EasyModelGate-v0.1-Deployment.md |
 | Frozen specification | docs/specifications/EasyModelGate-v0.1-Final-Specification.md |
 | Design decisions | docs/decisions/ |
