@@ -15,7 +15,7 @@ import httpx
 import pytest
 
 from conftest import (_free_port, init_schema, make_cfg, run_server_in_thread,
-                      seed_key, stop_server, VALID_TOKEN)
+                      seed_key, stop_server, wait_latest_log, VALID_TOKEN)
 
 from server import create_slow_llama_app  # noqa: E402
 
@@ -195,6 +195,8 @@ async def test_total_timeout_streaming_aborts_and_logs(stack_factory):
             async for chunk in r.aiter_bytes():
                 buf += chunk
         assert len(buf) > 0                       # 已收到部分数据后被切断
-    row = _last_row(s["db_path"])
+    # 独立 stack 库仅一个请求：轮询等待 detached 日志任务落库
+    # （单次原子 INSERT，row 出现即终态），消除 _last_row 零等待 race
+    row = wait_latest_log(s["db_path"])
     assert row["error_type"] == "timeout"
     assert row["ttft_ms"] is not None

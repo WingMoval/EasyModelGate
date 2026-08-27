@@ -107,6 +107,7 @@ def test_quota_soft_overrun_and_reject(seeded):
 
     deadline_dependent_row = dict(wait_latest_log(db))
     assert deadline_dependent_row["total_tokens"] == 20
+    first_row_id = deadline_dependent_row["id"]        # 第一请求日志的稳定标识
 
     used_after = None
     import time as _t
@@ -121,7 +122,9 @@ def test_quota_soft_overrun_and_reject(seeded):
         "model": "m", "messages": [{"role": "u", "content": "x"}]})
     assert r.status_code == 429
     assert r.json()["error"]["code"] == "insufficient_quota"
-    row = dict(wait_latest_log(db))
+    # 等待"新 row"（id > 第一请求日志 id），避免 detached 落库未 commit 时
+    # 误读第一请求的旧 row（单次原子 INSERT：row 出现即终态）
+    row = dict(wait_latest_log(db, after_id=first_row_id))
     assert row["error_type"] == "quota_exceeded" and row["queue_wait_ms"] == 0
 
 

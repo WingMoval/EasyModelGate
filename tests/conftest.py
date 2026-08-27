@@ -108,10 +108,17 @@ def seeded(client):
     return client, {"Authorization": f"Bearer {VALID_TOKEN}"}
 
 
-def wait_latest_log(db_path, timeout: float = 5.0):
-    """轮询等待 detached 日志任务落库，返回最新一行（dict）。"""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
+def wait_latest_log(db_path, timeout: float = 5.0, *, after_id: int | None = None):
+    """轮询等待 detached 日志任务落库，返回最新一行（dict）。
+
+    after_id=None：库内存在任意 row 即返回（兼容原有语义）。
+    after_id=N：等待 id > N 的新 row 出现才返回——用于同库已有先前请求
+    日志、需精确定位目标请求日志的场景，避免读到旧 row 的 race
+    （request_logs.id 为 AUTOINCREMENT 主键，单调稳定）。
+    超时抛出 AssertionError，避免调用方对 None 取值得到误导性异常。
+    """
+    deadline = time.monotonic() + timeout
+    while True:
         con = sqlite3.connect(str(db_path))
         con.row_factory = sqlite3.Row
         try:
@@ -119,10 +126,13 @@ def wait_latest_log(db_path, timeout: float = 5.0):
                 "SELECT * FROM request_logs ORDER BY id DESC LIMIT 1").fetchone()
         finally:
             con.close()
-        if row is not None:
+        if row is not None and (after_id is None or row["id"] > after_id):
             return dict(row)
-        time.sleep(0.05)
-    return None
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                f"request log not persisted within {timeout}s "
+                f"(db={Path(str(db_path)).name}, after_id={after_id})")
+        time.sleep(0.02)
 
 
 def init_schema(db_path) -> None:
