@@ -178,11 +178,24 @@ async def test_period_today(db):
     kid, _, _ = await key_service.create_key(
         db, user_id=uid, name=None, rpm=None, token_limit=None,
         expires_in_days=None, timezone=TZ, key_prefix="emg_")
-    await _seed_logs(db, uid, kid)
+    # 以“今日午夜”为锚点造数，与运行时刻无关（避免 00:00-02:00 边界假失败）
     now = datetime.now(ZoneInfo(TZ))
-    start, end, gb = usage_service.resolve_time_range("today", None, None, TZ)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    assert start == int(midnight.timestamp() * 1000) and end is None
+    m_ms = int(midnight.timestamp() * 1000)
+    rows = [(m_ms + 3_600_000, "alpha", 200, 10),        # 今天
+            (m_ms + 2 * 3_600_000, "beta", 200, 20),     # 今天
+            (m_ms - 3_600_000, "alpha", 500, 0)]         # 昨天
+    for i, (ts, model, status, tok) in enumerate(rows):
+        await db.conn.execute(
+            """INSERT INTO request_logs
+                 (request_id, user_id, api_key_id, backend_id, model, endpoint,
+                  started_at, status_code, total_tokens, error_type)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (f"r{i}", uid, kid, 1, model, "/v1/chat/completions",
+             ts, status, tok, None if status == 200 else "upstream_error"))
+    await db.conn.commit()
+    start, end, gb = usage_service.resolve_time_range("today", None, None, TZ)
+    assert start == m_ms and end is None
     assert gb == "hour"
     f = SummaryFilter(start_ms=start, end_ms=end, granularity=gb, timezone=TZ)
     rows = await usage_service.summarize(db, f)
