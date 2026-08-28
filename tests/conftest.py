@@ -161,6 +161,43 @@ def wait_log_count(db_path, at_least: int, timeout: float = 5.0) -> int:
         time.sleep(0.02)
 
 
+def wait_for_log(db_path, timeout: float = 5.0, *,
+                 after_id: int | None = None, **cols):
+    """轮询等待 request_logs 中列值精确匹配 cols 的最新一行（dict）。
+
+    仅当出现完全匹配的行才返回——内容不符绝不返回，因此不可能凭定位
+    条件误判 PASS；超时抛 AssertionError 并附库中最新行辅助诊断。
+    用于同一库内并发/先后请求的 detached 日志乱序落库时，按请求自身
+    元数据（如 stream 标记）稳定定位目标行，替代零等待读最新行。
+    """
+    assert cols, "wait_for_log 需要至少一个定位列"
+    deadline = time.monotonic() + timeout
+    where = " AND ".join(f"{k}=?" for k in cols)
+    params: list = list(cols.values())
+    if after_id is not None:
+        where = "id>? AND " + where
+        params.insert(0, after_id)
+    while True:
+        con = sqlite3.connect(str(db_path))
+        con.row_factory = sqlite3.Row
+        try:
+            row = con.execute(
+                f"SELECT * FROM request_logs WHERE {where} "
+                f"ORDER BY id DESC LIMIT 1", params).fetchone()
+            latest = con.execute(
+                "SELECT * FROM request_logs ORDER BY id DESC LIMIT 1").fetchone()
+        finally:
+            con.close()
+        if row is not None:
+            return dict(row)
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                f"no request log matching {cols} within {timeout}s "
+                f"(db={Path(str(db_path)).name}, "
+                f"latest={dict(latest) if latest else None})")
+        time.sleep(0.02)
+
+
 def init_schema(db_path) -> None:
     """同步初始化 schema（可在事件循环内安全调用）。"""
     import json

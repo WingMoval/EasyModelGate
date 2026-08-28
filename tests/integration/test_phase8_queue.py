@@ -15,8 +15,8 @@ import httpx
 import pytest
 
 from conftest import (_free_port, init_schema, make_cfg, run_server_in_thread,
-                      seed_key, stop_server, wait_latest_log, wait_log_count,
-                      VALID_TOKEN)
+                      seed_key, stop_server, wait_for_log, wait_latest_log,
+                      wait_log_count, VALID_TOKEN)
 
 from server import create_slow_llama_app  # noqa: E402
 
@@ -105,7 +105,10 @@ async def test_second_request_queues_with_positive_queue_wait(stack_factory):
         assert r.status_code == 200
         await t_a
 
-    row = _last_row(s["db_path"])
+    # 同步边界：A（stream=1）与 B（stream=0，排队请求）的 detached 日志
+    # 落库顺序不确定，零等待 _last_row 可能读到空行或 A 的 row。
+    # B 是本库唯一非流式请求，按请求自身元数据稳定定位，再独立断言。
+    row = wait_for_log(s["db_path"], stream=0)
     assert row["queue_wait_ms"] is not None and row["queue_wait_ms"] >= 50, \
         f"第二请求应观察到正排队耗时：{row['queue_wait_ms']}"
     assert row["queue_wait_ms"] <= waited_wall + 1500   # monotonic 与墙钟同量级
@@ -184,7 +187,8 @@ async def test_total_timeout_non_stream_closes_upstream(stack_factory):
         assert r.status_code == 504
         assert r.json()["error"]["code"] == "timeout"
         assert 500 <= wall <= 4000
-    row = _last_row(s["db_path"])
+    # 独立 stack 库仅一个请求：轮询等待 detached 日志落库，消除零等待 race
+    row = wait_latest_log(s["db_path"])
     assert row["status_code"] == 504 and row["error_type"] == "timeout"
     events = [json.loads(l)["event"]
               for l in Path(s["slow_log"]).read_text().splitlines()]
