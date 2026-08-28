@@ -114,3 +114,20 @@ async def touch_last_used(db: Database, key_id: int, ts_ms: int | None = None) -
     await db.conn.execute("UPDATE api_keys SET last_used_at=? WHERE id=?",
                           (ts_ms or now_ms(), key_id))
     await db.conn.commit()
+
+
+# ---------- settings（通用 KV；value 一律 JSON 文本） ----------
+
+async def get_setting(db: Database, key: str) -> str | None:
+    cur = await db.conn.execute(
+        "SELECT value_json FROM settings WHERE key=?", (key,))
+    row = await cur.fetchone()
+    return None if row is None else row["value_json"]
+
+
+async def set_setting(db: Database, key: str, value_json: str) -> None:
+    await db.conn.execute(
+        "INSERT INTO settings (key, value_json) VALUES (?,?) "
+        "ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json",
+        (key, value_json))
+    await db.conn.commit()

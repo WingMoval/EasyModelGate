@@ -15,7 +15,7 @@ from .config import AppConfig, load_config
 from .core.security import mask_key
 from .db.database import Database
 from .services import usage_service
-from .services import user_service, key_service
+from .services import user_service, key_service, admin_auth_service
 from .services.analytics import SummaryFilter
 
 
@@ -77,6 +77,14 @@ def main(argv: list[str] | None = None) -> int:
     us.add_argument("--key", help="按 Key 前缀过滤")
     us.add_argument("--model", help="按模型名过滤")
 
+    admin_p = sub.add_parser("admin", help="管理员管理")
+    admin_sub = admin_p.add_subparsers(dest="admin_cmd", required=True)
+    a_init = admin_sub.add_parser(
+        "init", help="初始化管理员密码（scrypt 派生密钥入库，绝不存明文）")
+    a_init.add_argument("--password-stdin", dest="password_stdin",
+                        action="store_true",
+                        help="从标准输入读取密码（自动化部署用；避免密码进入 shell 历史）")
+
     args = parser.parse_args(argv)
 
     if args.cmd == "serve":
@@ -114,9 +122,42 @@ async def _run_cli(cfg: AppConfig, args) -> int:
             return await _key(cfg, db, args)
         if args.cmd == "usage":
             return await _usage(cfg, db, args)
+        if args.cmd == "admin":
+            return await _admin(db, args)
         raise ValueError(f"未知命令 {args.cmd}")
     finally:
         await db.close()
+
+
+# ---------- admin ----------
+
+async def _admin(db: Database, args) -> int:
+    if args.admin_cmd == "init":
+        if await admin_auth_service.is_admin_initialized(db):
+            print("Admin already initialized.")
+            return 1
+        if args.password_stdin:
+            password = sys.stdin.readline().rstrip("\r\n")
+        else:
+            import getpass
+            try:
+                p1 = getpass.getpass("Password: ")
+                p2 = getpass.getpass("Confirm password: ")
+            except EOFError:
+                print("错误：交互读取不可用，请使用 --password-stdin")
+                return 1
+            if p1 != p2:
+                print("错误：两次输入的密码不一致")
+                return 1
+            password = p1
+        try:
+            await admin_auth_service.initialize_admin(db, password)
+        except admin_auth_service.EmptyPasswordError:
+            print("错误：密码不能为空")
+            return 1
+        print("Admin initialized.")
+        return 0
+    raise ValueError(f"未知命令 admin {args.admin_cmd}")
 
 
 # ---------- user ----------

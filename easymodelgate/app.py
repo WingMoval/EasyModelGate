@@ -15,6 +15,8 @@ from .core.errors import register_error_handlers
 from .core.ratelimit import FixedWindowRpmLimiter
 from .db.database import Database
 from .proxy.upstream import UpstreamClient
+from .core.admin_session import LoginRateLimiter, SessionStore
+from .routers.admin import build_admin_api_router
 from .routers.public import router as public_router
 
 logger = logging.getLogger("easymodelgate.app")
@@ -81,6 +83,10 @@ def create_app(cfg: AppConfig | None = None) -> FastAPI:
     )
     register_error_handlers(app)
     app.include_router(public_router)
+    # Admin 会话与登录限速：进程内状态（重启需重登，v0.1.1 MVP 冻结边界）
+    app.state.admin_sessions = SessionStore()
+    app.state.admin_login_limiter = LoginRateLimiter()
+    app.include_router(build_admin_api_router())
 
     def spawn(coro) -> asyncio.Task:
         """创建受管理的 detached task（防 GC、shutdown 可等待，规格 §36）。"""
