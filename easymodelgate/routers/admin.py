@@ -85,10 +85,13 @@ async def require_admin_session(request: Request) -> Session:
     return session
 
 
-# 受保护组：组级依赖 = 会话认证 + CSRF Origin 校验（后者对 GET 自动放行）。
-# Task 3+ 的业务路由 include 到这里即自动继承认证，无需逐端点手工添加。
-admin_protected_router = APIRouter(
-    dependencies=[Depends(require_admin_session), Depends(require_same_origin)])
+# 受保护组工厂：组级依赖 = 会话认证 + CSRF Origin 校验（后者对 GET 自动放行）。
+# 每次 create_app 新建实例（避免多次装配时路由在共享 router 上累积）；
+# 业务路由 include 进组即自动继承认证，无需逐端点手工添加。
+def make_protected_router() -> APIRouter:
+    return APIRouter(
+        dependencies=[Depends(require_admin_session),
+                      Depends(require_same_origin)])
 
 
 def _cookie_kwargs(secure: bool) -> dict:
@@ -115,6 +118,7 @@ async def _parse_password(request: Request) -> str:
 
 def build_admin_api_router() -> APIRouter:
     router = APIRouter()
+    protected = make_protected_router()
     login_router = APIRouter(prefix="/admin/api/auth")
 
     @login_router.post("/login")
@@ -159,10 +163,16 @@ def build_admin_api_router() -> APIRouter:
         resp.set_cookie(SESSION_COOKIE_NAME, "", **cookie)  # 幂等清除
         return resp
 
-    @admin_protected_router.get("/admin/api/auth/me")
+    @protected.get("/admin/api/auth/me")
     async def admin_me(session: Session = Depends(require_admin_session)) -> dict:
         return {"authenticated": True}
 
+    # 业务路由：include 进 protected 即继承 require_admin_session + CSRF
+    from .admin_keys import router as keys_router
+    from .admin_users import router as users_router
+    protected.include_router(users_router)
+    protected.include_router(keys_router)
+
     router.include_router(login_router)
-    router.include_router(admin_protected_router)
+    router.include_router(protected)
     return router

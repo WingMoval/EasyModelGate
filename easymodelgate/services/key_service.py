@@ -64,6 +64,19 @@ async def list_keys(db: Database, user_id: int | None = None) -> list[Any]:
     return await dao.list_keys(db, user_id)
 
 
+async def list_keys_with_owner(db: Database) -> list[dict[str, Any]]:
+    """Key 列表 + 属主用户名。两次批量查询（keys + users）合成，无 N+1。"""
+    rows = await dao.list_keys(db, None)
+    names = {int(u["id"]): u["username"] for u in await dao.list_users(db)}
+    return [dict(r) | {"username": names.get(int(r["user_id"]))} for r in rows]
+
+
+async def get_key_with_owner(db: Database, key_id: int) -> dict[str, Any]:
+    row = await get_key(db, key_id)
+    user = await dao.get_user_by_id(db, int(row["user_id"]))
+    return dict(row) | {"username": user["username"] if user else None}
+
+
 async def resolve_key_prefix(db: Database, prefix: str) -> Any:
     """prefix 唯一匹配（存储的 key_prefix 即完整 Key 前 12 位）。"""
     matches = await dao.find_keys_by_prefix(db, prefix)
