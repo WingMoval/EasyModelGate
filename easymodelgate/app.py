@@ -5,6 +5,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import time as _t
 
 from fastapi import FastAPI
 
@@ -55,6 +56,8 @@ def create_app(cfg: AppConfig | None = None) -> FastAPI:
         app.state.cfg = cfg
         app.state.db = db
         app.state.backend_id = int(row["id"]) if row else None
+        app.state.started_monotonic = _t.monotonic()
+        app.state.started_at_ms = int(_t.time() * 1000)
         app.state.background_tasks: set[asyncio.Task] = set()
         app.state.upstream = UpstreamClient(cfg)
         app.state.slots = UpstreamSlots(cfg.upstream.slots)

@@ -169,9 +169,15 @@ def build_admin_api_router() -> APIRouter:
 
     # 业务路由：include 进 protected 即继承 require_admin_session + CSRF
     from .admin_keys import router as keys_router
+    from .admin_overview import router as overview_router
+    from .admin_requests import router as requests_router
+    from .admin_usage import router as usage_router
     from .admin_users import router as users_router
     protected.include_router(users_router)
     protected.include_router(keys_router)
+    protected.include_router(usage_router)
+    protected.include_router(overview_router)
+    protected.include_router(requests_router)
 
     router.include_router(login_router)
     router.include_router(protected)

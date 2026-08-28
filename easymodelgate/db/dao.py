@@ -131,3 +131,49 @@ async def set_setting(db: Database, key: str, value_json: str) -> None:
         "ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json",
         (key, value_json))
     await db.conn.commit()
+
+
+# ---------- request_logs（Dashboard 明细，仅元数据列） ----------
+
+async def list_request_logs(db: Database, *, limit: int = 50,
+                            errors_only: bool = False,
+                            user_id: int | None = None,
+                            api_key_id: int | None = None,
+                            model: str | None = None,
+                            status_code: int | None = None,
+                            error_type: str | None = None) -> list[Any]:
+    """最近请求元数据，id DESC 确定性排序；绝不 SELECT 内容列（表内本无内容列，
+    client_ip / error_message 亦不外泄）。username/key_name 经 LEFT JOIN 一次取回。"""
+    where = ["1=1"]
+    params: list = []
+    if errors_only:
+        where.append("rl.error_type IS NOT NULL")
+    for col, val in (("rl.user_id", user_id), ("rl.api_key_id", api_key_id),
+                     ("rl.model", model), ("rl.status_code", status_code),
+                     ("rl.error_type", error_type)):
+        if val is not None:
+            where.append(f"{col}=?")
+            params.append(val)
+    params.append(max(1, min(int(limit), 200)))
+    cur = await db.conn.execute(
+        f"""SELECT rl.id, rl.request_id, rl.started_at, rl.finished_at,
+                   rl.user_id, u.username, rl.api_key_id, k.name AS key_name,
+                   k.key_prefix AS key_prefix, rl.model, rl.endpoint,
+                   rl.status_code, rl.upstream_status_code, rl.stream,
+                   rl.prompt_tokens, rl.completion_tokens, rl.total_tokens,
+                   rl.cached_tokens, rl.duration_ms, rl.queue_wait_ms,
+                   rl.upstream_duration_ms, rl.ttft_ms, rl.finish_reason,
+                   rl.error_type
+              FROM request_logs rl
+              LEFT JOIN users u ON u.id = rl.user_id
+              LEFT JOIN api_keys k ON k.id = rl.api_key_id
+             WHERE {' AND '.join(where)}
+             ORDER BY rl.id DESC LIMIT ?""", params)
+    return list(await cur.fetchall())
+
+
+async def count_enabled_keys(db: Database) -> int:
+    cur = await db.conn.execute(
+        "SELECT COUNT(*) FROM api_keys WHERE enabled=1")
+    row = await cur.fetchone()
+    return int(row[0])
