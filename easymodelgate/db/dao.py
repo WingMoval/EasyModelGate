@@ -44,6 +44,13 @@ async def set_user_enabled(db: Database, username: str, enabled: bool) -> bool:
     return cur.rowcount > 0
 
 
+async def set_user_enabled_by_id(db: Database, user_id: int, enabled: bool) -> bool:
+    cur = await db.conn.execute(
+        "UPDATE users SET enabled=? WHERE id=?", (int(enabled), user_id))
+    await db.conn.commit()
+    return cur.rowcount > 0
+
+
 # ---------- api_keys ----------
 
 async def create_api_key(db: Database, *, user_id: int, name: str | None,
@@ -84,6 +91,21 @@ async def list_keys(db: Database, user_id: int | None = None) -> list[Any]:
 async def set_key_enabled_by_id(db: Database, key_id: int, enabled: bool) -> bool:
     cur = await db.conn.execute(
         "UPDATE api_keys SET enabled=? WHERE id=?", (int(enabled), key_id))
+    await db.conn.commit()
+    return cur.rowcount > 0
+
+
+async def get_key_by_id(db: Database, key_id: int) -> Any:
+    cur = await db.conn.execute("SELECT * FROM api_keys WHERE id=?", (key_id,))
+    return await cur.fetchone()
+
+
+async def set_key_limits_by_id(db: Database, key_id: int,
+                               rpm_limit: int | None,
+                               token_limit: int | None) -> bool:
+    cur = await db.conn.execute(
+        "UPDATE api_keys SET rpm_limit=?, token_limit=? WHERE id=?",
+        (rpm_limit, token_limit, key_id))
     await db.conn.commit()
     return cur.rowcount > 0
 
