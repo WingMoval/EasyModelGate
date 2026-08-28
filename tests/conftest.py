@@ -135,6 +135,32 @@ def wait_latest_log(db_path, timeout: float = 5.0, *, after_id: int | None = Non
         time.sleep(0.02)
 
 
+def wait_log_count(db_path, at_least: int, timeout: float = 5.0) -> int:
+    """轮询等待 request_logs 行数达到 at_least，返回此刻 max(id)（空表为 0）。
+
+    用于在发出新请求前建立异步日志的同步边界：等待先前请求的 detached
+    日志真正 commit 后再取 max id，之后 wait_latest_log(after_id=该 id)
+    才能严格定位到新请求的日志——避免迟到的旧日志（更晚 INSERT、id 更大）
+    被误读为最新行。超时抛 AssertionError。
+    """
+    deadline = time.monotonic() + timeout
+    cnt = 0
+    while True:
+        con = sqlite3.connect(str(db_path))
+        try:
+            cnt, mx = con.execute(
+                "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM request_logs").fetchone()
+        finally:
+            con.close()
+        if cnt >= at_least:
+            return int(mx)
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                f"expected >= {at_least} request log(s) within {timeout}s, "
+                f"got {cnt} (db={Path(str(db_path)).name})")
+        time.sleep(0.02)
+
+
 def init_schema(db_path) -> None:
     """同步初始化 schema（可在事件循环内安全调用）。"""
     import json

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from conftest import init_schema, seed_key, wait_latest_log
+from conftest import init_schema, seed_key, wait_latest_log, wait_log_count
 
 from easymodelgate.app import create_app  # noqa: E402
 
@@ -56,6 +56,11 @@ def test_rpm_limit_blocks_and_logs(seeded):
                 for _ in range(2)]
     assert ok_codes == [200, 200]
 
+    # 同步边界：先等两个 200 请求的 detached 日志真正落库，再取稳定 max id。
+    # 若不等待，迟到的 200 日志可能在 429 日志之后才 INSERT（id 更大），
+    # 被 wait_latest_log 误读为最新行（TEST_RACE）。
+    stable_before_id = wait_log_count(db, 2)
+
     from server import get_last_request
     before = get_last_request(client.fake_app)
 
@@ -68,7 +73,7 @@ def test_rpm_limit_blocks_and_logs(seeded):
     retry_after = r.headers.get("retry-after")
     assert retry_after is not None and int(retry_after) >= 1
 
-    row = dict(wait_latest_log(db))
+    row = dict(wait_latest_log(db, after_id=stable_before_id))
     assert row["status_code"] == 429 and row["error_type"] == "rate_limited"
     assert row["queue_wait_ms"] == 0
     assert row["upstream_status_code"] is None

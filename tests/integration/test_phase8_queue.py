@@ -15,7 +15,8 @@ import httpx
 import pytest
 
 from conftest import (_free_port, init_schema, make_cfg, run_server_in_thread,
-                      seed_key, stop_server, wait_latest_log, VALID_TOKEN)
+                      seed_key, stop_server, wait_latest_log, wait_log_count,
+                      VALID_TOKEN)
 
 from server import create_slow_llama_app  # noqa: E402
 
@@ -129,7 +130,10 @@ async def test_queue_timeout_returns_503_server_busy(stack_factory):
                 "messages": [{"role": "user", "content": "x"}]})
             assert r.status_code == 503
             assert r.json()["error"]["code"] == "server_busy"
-            row = _last_row(s["db_path"])
+            # 同步边界：轮询等待 503 的 detached 日志落库（此库中唯一已完成
+            # 的请求；占用 slot 的 A 仍在流式中，其日志尚不可能存在），
+            # 消除 _last_row 零等待读空行的 race。
+            row = wait_latest_log(s["db_path"])
             assert row["status_code"] == 503 and row["error_type"] == "server_busy"
             assert row["queue_wait_ms"] >= 300    # 等满 queue_timeout
             assert row["upstream_status_code"] is None   # 未触达 upstream
@@ -153,6 +157,10 @@ async def test_upstream_error_releases_slot(stack_factory):
             "model": "m", "emg_case": "http_500",
             "messages": [{"role": "user", "content": "x"}]})
         assert r1.status_code == 500
+        # 同步边界：等 r1（500）的 detached 日志落库并取稳定 max id，
+        # 之后 r2 的日志必须 id > before_id；否则迟到的 r1 日志
+        # （id 更大）会被误读为最新行。
+        before_id = wait_log_count(s["db_path"], 1)
         t0 = time.monotonic()
         r2 = await c.post(url, headers=HDR, json={
             "model": "m", "emg_duration": 1, "emg_interval": 0.01,
@@ -160,7 +168,7 @@ async def test_upstream_error_releases_slot(stack_factory):
         elapsed = time.monotonic() - t0
         assert r2.status_code == 200
         assert elapsed < 5, "slot 应已释放（无排队阻塞）"
-    row = _last_row(s["db_path"])
+    row = wait_latest_log(s["db_path"], after_id=before_id)
     assert row["error_type"] is None
 
 
