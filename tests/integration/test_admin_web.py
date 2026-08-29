@@ -194,14 +194,14 @@ def test_users_page_skeleton(admin_client):
     r = admin_client.get("/admin/users")
     assert r.status_code == 200
     assert "Users" in r.text
-    assert "User management UI will be implemented in a future version" in r.text
+    assert "Create User" in r.text
 
 
 def test_keys_page_skeleton(admin_client):
     r = admin_client.get("/admin/keys")
     assert r.status_code == 200
     assert "API Keys" in r.text
-    assert "Key management UI will be implemented in a future version" in r.text
+    assert "Create Key" in r.text
 
 
 def test_usage_page_skeleton(admin_client):

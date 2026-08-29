@@ -32,6 +32,9 @@
             </tbody>
         </table>
     </div>
-    <p class="hint">User management UI will be implemented in a future version. Use the Admin API directly for now.</p>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('admin-static', path='users.js') }}"></script>
 {% endblock %}
