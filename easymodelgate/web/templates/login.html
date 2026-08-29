@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="login-icon"></span>
+            <h1>EasyModelGate Admin</h1>
+            <p class="login-subtitle">Sign in to continue</p>
+        </div>
+
+        {% if not initialized %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Admin not initialized.</strong>
+            Please run on the server:
+            <pre class="cmd">python -m easymodelgate --config <CONFIG> admin init</pre>
+        </div>
+        {% endif %}
+
+        <form id="login-form" novalidate>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required aria-required="true">
+            </div>
+            <div id="login-error" class="form-error" aria-live="polite"></div>
+            <button type="submit" class="btn btn-primary btn-block" id="login-btn">Sign In</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    const errorEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errorEl.textContent = '';
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+
+        const password = form.password.value;
+        try {
+            const res = await adminFetch('/admin/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            if (res.ok) {
+                window.location.href = '/admin';
+            } else {
+                const data = await res.json().catch(() => ({}));
+                const code = data.error?.code || 'unknown_error';
+                errorEl.textContent = formatLoginError(code, res.status);
+            }
+        } catch (err) {
+            errorEl.textContent = 'Network error. Please try again.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+        }
+    });
+
+    function formatLoginError(code, status) {
+        switch (code) {
+            case 'admin_not_initialized':
+                return 'Admin not initialized. Please run "python -m easymodelgate admin init" on the server.';
+            case 'invalid_admin_credentials':
+                return 'Invalid password.';
+            case 'admin_login_rate_limited':
+                return 'Too many login attempts. Please wait a moment.';
+            case 'csrf_origin_invalid':
+                return 'Invalid request origin. Please reload the page.';
+            case 'admin_auth_required':
+                return 'Authentication required.';
+            default:
+                return 'Login failed (status ' + status + '). Please try again.';
+        }
+    }
+});
+</script>
+{% endblock %}

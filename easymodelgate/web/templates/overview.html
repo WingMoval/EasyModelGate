@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% set active_nav = 'overview' %}
+{% set page_title = 'Overview' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Overview</h1>
+</div>
+
+<div class="grid grid-4" id="overview-cards">
+    <div class="card">
+        <div class="card-label">Gateway</div>
+        <div class="card-value" id="card-gateway">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Backend</div>
+        <div class="card-value" id="card-backend">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Requests Today</div>
+        <div class="card-value" id="card-requests">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Total Tokens</div>
+        <div class="card-value" id="card-tokens">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Success Rate</div>
+        <div class="card-value" id="card-success-rate">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Avg TTFT</div>
+        <div class="card-value" id="card-ttft">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Active Keys</div>
+        <div class="card-value" id="card-keys">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Quick Actions</h2>
+    <div class="actions">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Manage Users</a>
+        <a href="{{ url_for('admin_keys') }}" class="btn btn-secondary">Manage API Keys</a>
+        <a href="{{ url_for('admin_usage') }}" class="btn btn-secondary">View Usage</a>
+        <a href="{{ url_for('admin_system') }}" class="btn btn-secondary">System Status</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const data = await adminFetch('/admin/api/overview');
+        if (!data) return;
+
+        const today = data.today || {};
+
+        setBadge('card-gateway', data.gateway?.status || 'unknown');
+        setBadge('card-backend', data.backend?.status || 'unknown');
+        setValue('card-requests', today.requests ?? '—');
+        setValue('card-tokens', formatNumber(today.total_tokens ?? '—'));
+        setValue('card-success-rate', today.success_rate !== undefined ? (today.success_rate * 100).toFixed(1) + '%' : '—');
+        setValue('card-ttft', today.avg_ttft_ms !== undefined && today.avg_ttft_ms !== null ? today.avg_ttft_ms.toFixed(1) + ' ms' : '—');
+        setValue('card-keys', data.active_keys ?? '—');
+    } catch (err) {
+        document.querySelectorAll('#overview-cards .card-value').forEach(el => {
+            el.innerHTML = '<span class="badge badge-error">Error</span>';
+        });
+    }
+});
+
+function setBadge(elementId, status) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const cls = status === 'healthy' ? 'badge-success' : 'badge-error';
+    el.innerHTML = '<span class="badge ' + cls + '">' + status + '</span>';
+}
+
+function setValue(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = value;
+}
+
+function formatNumber(n) {
+    if (typeof n !== 'number') return n;
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toString();
+}
+</script>
+{% endblock %}

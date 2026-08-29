@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyModelGate Admin {% if page_title %}— {{ page_title }}{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('admin-static', path='admin.css') }}">
+    <meta name="color-scheme" content="light">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <a href="{{ url_for('admin_overview') }}" class="brand" aria-label="EasyModelGate Admin Home">
+                <span class="brand-icon"></span>
+                <span class="brand-text">EasyModelGate</span>
+            </a>
+        </div>
+        <div class="topbar-right">
+            <span class="page-title">{{ page_title or "Dashboard" }}</span>
+            <form id="logout-form" action="{{ url_for('admin_logout') }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-secondary" id="logout-btn">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav class="sidebar" aria-label="Main navigation">
+            <ul class="nav-list">
+                <li>
+                    <a href="{{ url_for('admin_overview') }}" class="nav-link {% if active_nav == 'overview' %}active{% endif %}">
+                        <span class="nav-icon"></span>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_users') }}" class="nav-link {% if active_nav == 'users' %}active{% endif %}">
+                        <span class="nav-icon"></span>
+                        <span>Users</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_keys') }}" class="nav-link {% if active_nav == 'keys' %}active{% endif %}">
+                        <span class="nav-icon"></span>
+                        <span>API Keys</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_usage') }}" class="nav-link {% if active_nav == 'usage' %}active{% endif %}">
+                        <span class="nav-icon"></span>
+                        <span>Usage</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_system') }}" class="nav-link {% if active_nav == 'system' %}active{% endif %}">
+                        <span class="nav-icon"></span>
+                        <span>System</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content" role="main">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('admin-static', path='admin.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

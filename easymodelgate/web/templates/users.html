@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% set active_nav = 'users' %}
+{% set page_title = 'Users' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Users</h1>
+    <div class="page-actions">
+        <button class="btn btn-primary" id="btn-create-user" disabled>Create User</button>
+    </div>
+</div>
+
+<div class="section">
+    <div class="table-container">
+        <table class="data-table" id="users-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Display Name</th>
+                    <th>Note</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="7"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">User management UI will be implemented in a future version. Use the Admin API directly for now.</p>
+</div>
+{% endblock %}

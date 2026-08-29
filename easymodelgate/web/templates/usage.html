@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% set active_nav = 'usage' %}
+{% set page_title = 'Usage' %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Usage</h1>
+</div>
+
+<div class="grid grid-4" id="usage-cards">
+    <div class="card">
+        <div class="card-label">Requests (Today)</div>
+        <div class="card-value" id="usage-requests">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Total Tokens (Today)</div>
+        <div class="card-value" id="usage-tokens">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Success Rate</div>
+        <div class="card-value" id="usage-success-rate">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-label">Avg TTFT</div>
+        <div class="card-value" id="usage-ttft">
+            <span class="badge badge-loading">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Timeseries (Today, Hourly)</h2>
+    <div class="table-container">
+        <table class="data-table" id="usage-timeseries-table">
+            <thead>
+                <tr>
+                    <th>Bucket</th>
+                    <th>Requests</th>
+                    <th>Success</th>
+                    <th>Failed</th>
+                    <th>Total Tokens</th>
+                    <th>Avg Duration (ms)</th>
+                    <th>Avg TTFT (ms)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="7"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p class="hint">Advanced filters, date pickers, and charts will be added in a future version.</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const [summaryRes, timeseriesRes] = await Promise.all([
+            adminFetch('/admin/api/usage/summary?period=today'),
+            adminFetch('/admin/api/usage/timeseries?period=today&group_by=hour')
+        ]);
+
+        if (summaryRes) {
+            const s = summaryRes.summary || {};
+            setValue('usage-requests', s.requests ?? '—');
+            setValue('usage-tokens', formatNumber(s.total_tokens ?? '—'));
+            setValue('usage-success-rate', s.success_rate !== undefined ? (s.success_rate * 100).toFixed(1) + '%' : '—');
+            setValue('usage-ttft', s.avg_ttft_ms !== undefined && s.avg_ttft_ms !== null ? s.avg_ttft_ms.toFixed(1) + ' ms' : '—');
+        }
+
+        if (timeseriesRes) {
+            renderTimeseries(timeseriesRes.items || []);
+        }
+    } catch (err) {
+        document.querySelectorAll('#usage-cards .card-value').forEach(el => {
+            el.innerHTML = '<span class="badge badge-error">Error</span>';
+        });
+        renderTimeseries([]);
+    }
+});
+
+function renderTimeseries(items) {
+    const tbody = document.querySelector('#usage-timeseries-table tbody');
+    if (!tbody) return;
+
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">No data for today</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => `
+        <tr>
+            <td>${escapeHtml(item.bucket)}</td>
+            <td>${item.requests ?? '—'}</td>
+            <td>${item.success ?? '—'}</td>
+            <td>${item.failed ?? '—'}</td>
+            <td>${formatNumber(item.total_tokens ?? '—')}</td>
+            <td>${item.avg_duration_ms !== undefined && item.avg_duration_ms !== null ? item.avg_duration_ms.toFixed(1) : '—'}</td>
+            <td>${item.avg_ttft_ms !== undefined && item.avg_ttft_ms !== null ? item.avg_ttft_ms.toFixed(1) : '—'}</td>
+        </tr>
+    `).join('');
+}
+
+function setValue(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = value;
+}
+
+function formatNumber(n) {
+    if (typeof n !== 'number') return n;
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toString();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}
