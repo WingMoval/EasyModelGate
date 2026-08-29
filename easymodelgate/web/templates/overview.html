@@ -4,55 +4,133 @@
 {% set page_title = 'Overview' %}
 
 {% block content %}
+<!-- Backend Unhealthy Banner (injected by JS) -->
+
 <div class="page-header">
     <h1>Overview</h1>
-</div>
-
-<div class="grid grid-4" id="overview-cards">
-    <div class="card">
-        <div class="card-label">Gateway</div>
-        <div class="card-value" id="card-gateway">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Backend</div>
-        <div class="card-value" id="card-backend">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Requests Today</div>
-        <div class="card-value" id="card-requests">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Total Tokens</div>
-        <div class="card-value" id="card-tokens">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Success Rate</div>
-        <div class="card-value" id="card-success-rate">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Avg TTFT</div>
-        <div class="card-value" id="card-ttft">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Active Keys</div>
-        <div class="card-value" id="card-keys">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-secondary" id="btn-refresh">Refresh</button>
     </div>
 </div>
 
+<!-- Health Status -->
+<div class="section">
+    <div class="health-grid" id="overview-cards">
+        <div class="health-card">
+            <div class="health-label">Gateway</div>
+            <div class="health-value" id="card-gateway">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Backend</div>
+            <div class="health-value" id="card-backend">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Requests Today</div>
+            <div class="health-value" id="card-requests">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Total Tokens</div>
+            <div class="health-value" id="card-tokens">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Success Rate</div>
+            <div class="health-value" id="card-success-rate">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Avg TTFT</div>
+            <div class="health-value" id="card-ttft">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Active Keys</div>
+            <div class="health-value" id="card-keys">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usage Trend (24h) -->
+<div class="section">
+    <div class="section-header">
+        <h2>Usage Trend — Last 24 Hours</h2>
+    </div>
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div id="requests-trend-container"></div>
+        </div>
+        <div class="chart-card">
+            <div id="tokens-trend-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Requests -->
+<div class="section">
+    <div class="section-header">
+        <h2>Recent Requests</h2>
+        <a href="{{ url_for('admin_usage') }}" class="btn btn-secondary btn-sm">View Usage</a>
+    </div>
+    <div class="table-container" id="recent-requests-table">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>API Key</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Tokens</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="7"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Errors -->
+<div class="section">
+    <div class="section-header">
+        <h2>Recent Errors</h2>
+        <a href="{{ url_for('admin_system') }}" class="btn btn-secondary btn-sm">View System</a>
+    </div>
+    <div class="table-container" id="recent-errors-table">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Error Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="5"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quick Links -->
 <div class="section">
     <h2>Quick Actions</h2>
     <div class="actions">
@@ -65,46 +143,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const data = await adminFetch('/admin/api/overview');
-        if (!data) return;
-
-        const today = data.today || {};
-
-        setBadge('card-gateway', data.gateway?.status || 'unknown');
-        setBadge('card-backend', data.backend?.status || 'unknown');
-        setValue('card-requests', today.requests ?? '—');
-        setValue('card-tokens', formatNumber(today.total_tokens ?? '—'));
-        setValue('card-success-rate', today.success_rate !== undefined ? (today.success_rate * 100).toFixed(1) + '%' : '—');
-        setValue('card-ttft', today.avg_ttft_ms !== undefined && today.avg_ttft_ms !== null ? today.avg_ttft_ms.toFixed(1) + ' ms' : '—');
-        setValue('card-keys', data.active_keys ?? '—');
-    } catch (err) {
-        document.querySelectorAll('#overview-cards .card-value').forEach(el => {
-            el.innerHTML = '<span class="badge badge-error">Error</span>';
-        });
-    }
-});
-
-function setBadge(elementId, status) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const cls = status === 'healthy' ? 'badge-success' : 'badge-error';
-    el.innerHTML = '<span class="badge ' + cls + '">' + status + '</span>';
-}
-
-function setValue(elementId, value) {
-    const el = document.getElementById(elementId);
-    if (el) el.textContent = value;
-}
-
-function formatNumber(n) {
-    if (typeof n !== 'number') return n;
-    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
-    return n.toString();
-}
-</script>
+<script src="{{ url_for('admin-static', path='overview.js') }}"></script>
 {% endblock %}

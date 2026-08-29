@@ -467,3 +467,146 @@ window.setTableError = setTableError;
 window.renderTableRows = renderTableRows;
 window.copyToClipboard = copyToClipboard;
 window.debounce = debounce;
+// ==================== Shared Chart Helper ====================
+
+/**
+ * Render a simple line chart in an SVG container.
+ * @param {HTMLElement} container - The container element (must have clientWidth)
+ * @param {Array} items - Array of data points with .bucket and value field
+ * @param {Object} options - Chart options
+ * @param {string} options.valueField - Field name for y value (e.g., 'requests', 'total_tokens')
+ * @param {string} options.color - Stroke color (CSS variable or hex)
+ * @param {string} options.label - Chart label for figcaption
+ * @param {number} options.height - Chart height in pixels (default 180)
+ * @param {number} options.maxPoints - Max X axis labels to show (default 8)
+ */
+function renderLineChart(container, items, options) {
+    if (!container) return;
+
+    const {
+        valueField = 'requests',
+        color = 'var(--color-primary)',
+        label = 'Chart',
+        height = 180,
+        maxPoints = 8
+    } = options;
+
+    if (!items || !items.length) {
+        container.innerHTML = '<div class="chart-empty">No data.</div>';
+        return;
+    }
+
+    const values = items.map(i => i[valueField] || 0);
+    const maxVal = Math.max(...values);
+    const buckets = items.map(i => i.bucket);
+    const maxY = maxVal === 0 ? 1 : maxVal;
+
+    const width = container.clientWidth || 600;
+    const chartHeight = height;
+    const padding = { top: 20, right: 30, bottom: 30, left: 45 };
+    const innerWidth = width - padding.left - padding.right;
+    const innerHeight = chartHeight - padding.top - padding.bottom;
+
+    const xScale = (i) => padding.left + (innerWidth / Math.max(1, buckets.length - 1)) * i;
+    const yScale = (val) => padding.top + innerHeight - (val / maxY) * innerHeight;
+
+    let svg = '<svg width="' + width + '" height="' + chartHeight + '" viewBox="0 0 ' + width + ' ' + chartHeight + '" class="usage-chart" role="img" aria-label="' + escapeHtml(label) + ' chart">';
+    // Grid lines (Y axis)
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (innerHeight / 4) * i;
+        svg += '<line x1="' + padding.left + '" y1="' + y + '" x2="' + (width - padding.right) + '" y2="' + y + '" stroke="var(--color-border)" stroke-width="0.5"/>';
+        const val = Math.round(maxY * (1 - i / 4));
+        svg += '<text x="' + (padding.left - 8) + '" y="' + (y + 4) + '" font-size="9" fill="var(--color-text-muted)" text-anchor="end">' + formatNumber(val) + '</text>';
+    }
+    // X axis labels
+    const labelCount = Math.min(buckets.length, 8);
+    const step = Math.max(1, Math.floor(buckets.length / Math.max(1, labelCount)));
+    for (let i = 0; i < buckets.length; i += step) {
+        const x = padding.left + (innerWidth / Math.max(1, buckets.length - 1)) * i;
+        svg += '<text x="' + x + '" y="' + (chartHeight - 30 + 18) + '" font-size="9" fill="var(--color-text-muted)" text-anchor="middle" transform="rotate(-45, ' + x + ', ' + (chartHeight - 30 + 18) + ')">' + escapeHtml(buckets[i]) + '</text>';
+    }
+    // Line
+    let path = 'M';
+    for (let i = 0; i < items.length; i++) {
+        const x = padding.left + (innerWidth / Math.max(1, buckets.length - 1)) * i;
+        const y = padding.top + innerHeight - ((items[i][valueField] || 0) / maxY) * innerHeight;
+        path += (i === 0 ? '' : ' L') + x + ' ' + y;
+    }
+    const strokeColor = color.startsWith('var(') ? color : color;
+    svg += '<path d="' + path + '" stroke="' + strokeColor + '" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+    // Points
+    for (let i = 0; i < items.length; i++) {
+        const x = padding.left + (innerWidth / Math.max(1, buckets.length - 1)) * i;
+        const y = padding.top + innerHeight - ((items[i][valueField] || 0) / maxY) * innerHeight;
+        svg += '<circle cx="' + x + '" cy="' + y + '" r="3" fill="' + strokeColor + '" stroke="var(--color-surface)" stroke-width="1.5"/>';
+    }
+    svg += '</svg>';
+
+    container.innerHTML = '<figure class="chart-figure">' + svg + '<figcaption>' + escapeHtml(label) + '</figcaption></figure>';
+}
+
+// ==================== Shared Request Table Helper ====================
+
+/**
+ * Render a request table from items.
+ * @param {string} tableId - The table element ID (without #)
+ * @param {Array} items - Array of request log items
+ * @param {Object} options - Render options
+ * @param {boolean} options.showErrorType - Whether to show error_type column (default true for system, false for overview)
+ * @param {boolean} options.showDuration - Whether to show duration column (default true)
+ */
+function renderRequestTable(tableId, items, options = {}) {
+    const { showErrorType = true, showDuration = true } = options;
+    const container = document.getElementById(tableId);
+    if (!container) return;
+
+    const tbody = container.querySelector('tbody');
+    if (!tbody) return;
+
+    if (!items || !items.length) {
+        const colspan = 7 + (showErrorType ? 1 : 0);
+        tbody.innerHTML = '<tr class="empty"><td colspan="' + colspan + '">No recent requests.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const statusBadge = getStatusBadgeHtml(item.status_code);
+        const tokens = item.total_tokens !== null && item.total_tokens !== undefined ? formatNumber(item.total_tokens) : '—';
+        const duration = item.duration_ms !== null && item.duration_ms !== undefined ? item.duration_ms + ' ms' : '—';
+        const username = item.username || '—';
+        const keyName = item.key_name || item.masked_key || '—';
+        const errorType = item.error_type || '—';
+
+        let row = '<tr>' +
+            '<td>' + formatTimestamp(item.started_at) + '</td>' +
+            '<td>' + escapeHtml(username) + '</td>' +
+            '<td>' + escapeHtml(keyName) + '</td>' +
+            '<td>' + escapeHtml(item.model || '—') + '</td>' +
+            '<td>' + getStatusBadgeHtml(item.status_code) + '</td>';
+
+        if (showDuration) {
+            row += '<td>' + tokens + '</td>' +
+                '<td>' + (item.duration_ms !== null && item.duration_ms !== undefined ? item.duration_ms + ' ms' : '—') + '</td>';
+        }
+
+        if (showErrorType) {
+            row += '<td>' + escapeHtml(errorType) + '</td>';
+        }
+
+        row += '</tr>';
+        return row;
+    }).join('');
+}
+
+function getStatusBadgeHtml(statusCode) {
+    if (!statusCode) return '<span class="badge badge-neutral">—</span>';
+    if (statusCode >= 200 && statusCode < 300) return '<span class="badge badge-success">HTTP ' + statusCode + '</span>';
+    if (statusCode >= 400 && statusCode < 500) return '<span class="badge badge-warning">HTTP ' + statusCode + '</span>';
+    if (statusCode >= 500) return '<span class="badge badge-error">HTTP ' + statusCode + '</span>';
+    return '<span class="badge badge-neutral">HTTP ' + statusCode + '</span>';
+}
+
+// Export shared helpers
+window.renderLineChart = renderLineChart;
+window.renderRequestTable = renderRequestTable;
+window.getStatusBadgeHtml = getStatusBadgeHtml;

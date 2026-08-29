@@ -4,106 +4,162 @@
 {% set page_title = 'System' %}
 
 {% block content %}
+<!-- Backend Unhealthy Banner (injected by JS) -->
+<!-- Database Unhealthy Banner (injected by JS) -->
+
 <div class="page-header">
     <h1>System</h1>
-</div>
-
-<div class="grid grid-2" id="system-cards">
-    <div class="card">
-        <div class="card-label">Version</div>
-        <div class="card-value" id="sys-version">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Gateway</div>
-        <div class="card-value" id="sys-gateway">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Backend</div>
-        <div class="card-value" id="sys-backend">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Database</div>
-        <div class="card-value" id="sys-database">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Uptime</div>
-        <div class="card-value" id="sys-uptime">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-label">Started At</div>
-        <div class="card-value" id="sys-started">
-            <span class="badge badge-loading">Loading...</span>
-        </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-secondary" id="btn-refresh">Refresh</button>
     </div>
 </div>
 
+<!-- System Health -->
 <div class="section">
-    <h2>Recent Requests (placeholder)</h2>
-    <p class="hint">Recent requests list will be implemented in a future version.</p>
+    <div class="section-header">
+        <h2>System Health</h2>
+    </div>
+    <div class="health-grid" id="system-cards">
+        <div class="health-card">
+            <div class="health-label">Gateway</div>
+            <div class="health-value" id="sys-gateway">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Backend</div>
+            <div class="health-value" id="sys-backend">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Database</div>
+            <div class="health-value" id="sys-database">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Runtime Info -->
+<div class="section">
+    <div class="section-header">
+        <h2>Runtime</h2>
+        <span id="last-updated" class="last-updated">Last updated: —</span>
+    </div>
+    <div class="health-grid" id="runtime-cards">
+        <div class="health-card">
+            <div class="health-label">Version</div>
+            <div class="health-value" id="sys-version">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Uptime</div>
+            <div class="health-value" id="sys-uptime">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+        <div class="health-card">
+            <div class="health-label">Started At</div>
+            <div class="health-value" id="sys-started">
+                <span class="badge badge-loading">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backend Status -->
+<div class="section">
+    <div class="section-header">
+        <h2>Backend Status</h2>
+    </div>
+    <div class="status-detail" id="backend-status-detail">
+        <div class="status-detail-header">
+            <span class="status-detail-label">Backend</span>
+            <span class="status-detail-value" id="backend-status-value">
+                <span class="badge badge-loading">Loading...</span>
+            </span>
+        </div>
+        <div id="backend-unhealthy-detail" style="display: none;" class="status-detail-message">
+            <strong>Backend is currently unavailable.</strong> Model requests may fail until the backend recovers.
+        </div>
+    </div>
+</div>
+
+<!-- Database Status -->
+<div class="section">
+    <div class="section-header">
+        <h2>Database Status</h2>
+    </div>
+    <div class="status-detail" id="database-status-detail">
+        <div class="status-detail-header">
+            <span class="status-detail-label">Database</span>
+            <span class="status-detail-value" id="database-status-value">
+                <span class="badge badge-loading">Loading...</span>
+            </span>
+        </div>
+        <div id="database-unhealthy-detail" style="display: none;" class="status-detail-message">
+            <strong>Database is unavailable.</strong> Some dashboard data may not load correctly.
+        </div>
+    </div>
+</div>
+
+<!-- Recent Requests -->
+<div class="section">
+    <div class="section-header">
+        <h2>Recent Requests</h2>
+        <a href="{{ url_for('admin_usage') }}" class="btn btn-secondary btn-sm">View Usage</a>
+    </div>
+    <div class="table-container" id="system-requests-table">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>API Key</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Tokens</th>
+                    <th>Duration</th>
+                    <th>Error Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="8"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Errors -->
+<div class="section">
+    <div class="section-header">
+        <h2>Recent Errors</h2>
+    </div>
+    <div class="table-container" id="system-errors-table">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Error Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="loading-row">
+                    <td colspan="5"><span class="badge badge-loading">Loading...</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const data = await adminFetch('/admin/api/system');
-        if (!data) return;
-
-        setValue('sys-version', data.version || '—');
-        setBadge('sys-gateway', data.gateway?.status || 'unknown');
-        setBadge('sys-backend', data.backend?.status || 'unknown');
-        setBadge('sys-database', data.database?.status || 'unknown');
-        setValue('sys-uptime', data.uptime_seconds !== undefined ? formatUptime(data.uptime_seconds) : '—');
-        setValue('sys-started', data.started_at ? formatTimestamp(data.started_at) : '—');
-    } catch (err) {
-        document.querySelectorAll('#system-cards .card-value').forEach(el => {
-            el.innerHTML = '<span class="badge badge-error">Error</span>';
-        });
-    }
-});
-
-function setBadge(elementId, status) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const cls = status === 'healthy' ? 'badge-success' : 'badge-error';
-    el.innerHTML = '<span class="badge ' + cls + '">' + status + '</span>';
-}
-
-function setValue(elementId, value) {
-    const el = document.getElementById(elementId);
-    if (el) el.textContent = value;
-}
-
-function formatUptime(seconds) {
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    const parts = [];
-    if (d) parts.push(d + 'd');
-    if (h) parts.push(h + 'h');
-    if (m) parts.push(m + 'm');
-    if (s || !parts.length) parts.push(s + 's');
-    return parts.join(' ');
-}
-
-function formatTimestamp(ms) {
-    const date = new Date(ms);
-    return date.toLocaleString(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-}
-</script>
+<script src="{{ url_for('admin-static', path='system.js') }}"></script>
 {% endblock %}
