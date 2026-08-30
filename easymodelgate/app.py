@@ -8,6 +8,9 @@ import os
 import time as _t
 
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from . import __version__
 from .config import AppConfig, load_config
@@ -22,6 +25,63 @@ from .routers.admin_web import build_admin_web_router, mount_static_files
 from .routers.public import router as public_router
 
 logger = logging.getLogger("easymodelgate.app")
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+    
+    # CSP for Admin HTML pages - strict, no unsafe-inline
+    CSP_ADMIN = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self'; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "font-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+    
+    # CSP for Public API - minimal
+    CSP_API = (
+        "default-src 'none'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'none'; "
+        "form-action 'none'"
+    )
+    
+    # CSP for Static files - self only
+    CSP_STATIC = (
+        "default-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Add security headers to all responses
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "same-origin"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        
+        # Apply CSP based on path
+        path = request.url.path
+        if path.startswith("/admin"):
+            if path.startswith("/admin/static"):
+                response.headers["Content-Security-Policy"] = self.CSP_STATIC
+            else:
+                response.headers["Content-Security-Policy"] = self.CSP_ADMIN
+        elif path.startswith("/v1"):
+            response.headers["Content-Security-Policy"] = self.CSP_API
+        elif path.startswith("/health"):
+            response.headers["Content-Security-Policy"] = self.CSP_API
+        
+        return response
+
 
 _BACKEND_SEED_SQL = (
     "INSERT OR IGNORE INTO backends (name, type, base_url, api_key_ref, enabled, created_at) "
@@ -85,6 +145,7 @@ def create_app(cfg: AppConfig | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url=None,
     )
+    app.add_middleware(SecurityHeadersMiddleware)
     register_error_handlers(app)
     app.include_router(public_router)
     # Admin 会话与登录限速：进程内状态（重启需重登，v0.1.1 MVP 冻结边界）

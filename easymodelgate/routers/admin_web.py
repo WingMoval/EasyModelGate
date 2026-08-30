@@ -61,7 +61,12 @@ async def login_page(request: Request):
     if await check_admin_session(request):
         return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
 
-    initialized = True
+    # Check if admin is initialized
+    db = request.app.state.db
+    cur = await db.conn.execute("SELECT value_json FROM settings WHERE key = 'admin.auth'")
+    row = await cur.fetchone()
+    initialized = row is not None and row[0] is not None
+
     return templates.TemplateResponse(request, "login.html", {
         "initialized": initialized,
         "active_nav": "login",

@@ -17,7 +17,7 @@
         </div>
         <div class="topbar-right">
             <span class="page-title">{{ page_title or "Dashboard" }}</span>
-            <form id="logout-form" action="{{ url_for('admin_logout') }}" method="post" style="display:inline;">
+            <form id="logout-form" action="{{ url_for('admin_logout') }}" method="post" class="inline-form">
                 <button type="submit" class="btn btn-secondary" id="logout-btn">Logout</button>
             </form>
         </div>

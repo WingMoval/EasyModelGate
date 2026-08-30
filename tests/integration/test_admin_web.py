@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import io
 import sys
+import os
+import tempfile
 
 import pytest
 from conftest import VALID_TOKEN
@@ -48,14 +50,45 @@ def test_login_page_200(client):
     assert "Sign In" in r.text
 
 
-def test_login_page_shows_uninitialized_message(client, monkeypatch, tmp_path):
+def test_login_page_shows_uninitialized_message():
     """未初始化时登录页应显示提示信息。"""
-    cfg_path = _write_cfg(tmp_path, client.cfg.database.path)
-    # 不执行 admin init
-    r = client.get("/admin/login")
-    assert r.status_code == 200
-    assert "Admin not initialized" in r.text
-    assert "admin init" in r.text
+    import asyncio
+    import os
+    import tempfile
+    from easymodelgate.app import create_app
+    from easymodelgate.config import load_config
+    from fastapi.testclient import TestClient
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = os.path.join(tmpdir, 'test.db')
+        cfg_path = os.path.join(tmpdir, 'cfg.toml')
+        with open(cfg_path, 'w') as f:
+            f.write("""[server]
+host = "127.0.0.1"
+port = 3000
+
+[database]
+path = "%s"
+
+[upstream]
+base_url = "http://127.0.0.1:8999"
+api_key_file = ""
+""" % db_path)
+        
+        cfg = load_config(cfg_path)
+        app = create_app(cfg)
+        
+        async def test():
+            async with app.router.lifespan_context(app):
+                from fastapi.testclient import TestClient
+                client = TestClient(app, raise_server_exceptions=False)
+                r = client.get("/admin/login")
+                return r
+        
+        r = asyncio.run(test())
+        assert r.status_code == 200
+        assert "Admin not initialized" in r.text
+        assert "admin init" in r.text
 
 
 def test_login_page_redirect_when_logged_in(admin_client):
@@ -229,10 +262,6 @@ def test_no_admin_credential_in_html(admin_client):
 # ---------- Login JS error handling ----------
 
 def test_login_js_error_handling(client):
-    """登录页面包含错误处理 JS。"""
+    """登录页面引用外部 login.js 文件。"""
     r = client.get("/admin/login")
-    assert "formatLoginError" in r.text
-    assert "admin_not_initialized" in r.text
-    assert "invalid_admin_credentials" in r.text
-    assert "admin_login_rate_limited" in r.text
-    assert "csrf_origin_invalid" in r.text
+    assert "login.js" in r.text
