@@ -15,20 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const password = form.password.value;
         try {
-            const res = await adminFetch('/admin/api/auth/login', {
+            await adminFetch('/admin/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password })
             });
-            if (res.ok) {
-                window.location.href = '/admin';
-            } else {
-                const data = await res.json().catch(() => ({}));
-                const code = data.error?.code || 'unknown_error';
-                errorEl.textContent = formatLoginError(code, res.status);
-            }
+            // On success, adminFetch returns parsed JSON data (no exception thrown)
+            window.location.href = '/admin';
         } catch (err) {
-            errorEl.textContent = 'Network error. Please try again.';
+            // adminFetch throws on non-ok responses with normalized error
+            if (err.code) {
+                errorEl.textContent = formatLoginError(err.code, err.status);
+            } else {
+                errorEl.textContent = 'Network error. Please try again.';
+            }
         } finally {
             btn.disabled = false;
             btn.textContent = 'Sign In';
