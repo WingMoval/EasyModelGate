@@ -2,6 +2,24 @@
  * EasyModelGate Users Page Logic
  */
 
+const {
+    adminFetch,
+    escapeHtml,
+    formatTimestamp,
+    setTableLoading,
+    setTableEmpty,
+    setTableError,
+    createModal,
+    confirmModal,
+    alertModal,
+    setButtonLoading,
+    getFormData,
+    clearFormErrors,
+    showFormError,
+    showSuccessToast,
+    showErrorToast
+} = window.EMGAdmin;
+
 let usersCache = [];
 
 async function loadUsers() {

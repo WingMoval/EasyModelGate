@@ -2,6 +2,28 @@
  * EasyModelGate API Keys Page Logic
  */
 
+const {
+    adminFetch,
+    formatNumber,
+    formatTimestamp,
+    formatTokenUsage,
+    formatRpm,
+    escapeHtml,
+    setTableLoading,
+    setTableEmpty,
+    setTableError,
+    createModal,
+    confirmModal,
+    alertModal,
+    setButtonLoading,
+    getFormData,
+    clearFormErrors,
+    showFormError,
+    showSuccessToast,
+    showErrorToast,
+    copyToClipboard
+} = window.EMGAdmin;
+
 let keysCache = [];
 let usersForDropdown = [];
 
@@ -254,8 +276,8 @@ function showSecretModal(fullKey, keyName) {
                     showErrorToast('Unable to copy automatically. Please copy the key manually.');
                 }
             });
-        }, 50);
-    }
+        }
+    }, 50);
 }
 
 // ==================== Key Management Modal ====================

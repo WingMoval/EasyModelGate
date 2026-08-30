@@ -2,6 +2,18 @@
  * EasyModelGate System Dashboard Page Logic
  */
 
+const {
+    adminFetch,
+    formatNumber,
+    formatTimestamp,
+    formatUptime,
+    escapeHtml,
+    setStatusBadge,
+    setValue,
+    setButtonLoading,
+    getStatusBadgeHtml
+} = window.EMGAdmin;
+
 // ==================== System Page Logic ====================
 
 let isLoadingSystem = false;
@@ -242,14 +254,6 @@ function renderSystemErrorsError() {
     if (!container) return;
     const tbody = container.querySelector('tbody');
     if (tbody) tbody.innerHTML = '<tr class="error"><td colspan="5"><span class="badge badge-error">Unable to load recent errors.</span></td></tr>';
-}
-
-function getStatusBadgeHtml(statusCode) {
-    if (!statusCode) return '<span class="badge badge-neutral">—</span>';
-    if (statusCode >= 200 && statusCode < 300) return '<span class="badge badge-success">HTTP ' + statusCode + '</span>';
-    if (statusCode >= 400 && statusCode < 500) return '<span class="badge badge-warning">HTTP ' + statusCode + '</span>';
-    if (statusCode >= 500) return '<span class="badge badge-error">HTTP ' + statusCode + '</span>';
-    return '<span class="badge badge-neutral">HTTP ' + statusCode + '</span>';
 }
 
 function updateLastUpdated() {

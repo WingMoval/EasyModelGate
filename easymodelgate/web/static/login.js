@@ -2,6 +2,8 @@
  * EasyModelGate Login Page Logic
  */
 
+const { adminFetch } = window.EMGAdmin;
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('login-form');
     const errorEl = document.getElementById('login-error');

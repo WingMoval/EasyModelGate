@@ -101,6 +101,31 @@ function safeTextContent(element, text) {
     if (element) element.textContent = text;
 }
 
+function setValue(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = (value === null || value === undefined) ? '' : String(value);
+}
+
+function setStatusBadge(elementId, status) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const badgeClassFor = (s) => {
+        if (s === 'healthy' || s === 'ok' || s === 'online') return 'badge-success';
+        if (s === 'degraded' || s === 'warning') return 'badge-warning';
+        if (s === 'unhealthy' || s === 'down' || s === 'error' || s === 'offline') return 'badge-error';
+        if (s === 'loading' || s === 'pending') return 'badge-loading';
+        return 'badge-neutral';
+    };
+    const badge = el.querySelector('.badge');
+    if (badge) {
+        badge.className = 'badge ' + badgeClassFor(status);
+        badge.textContent = String(status);
+    } else {
+        el.textContent = String(status);
+        el.dataset.status = status;
+    }
+}
+
 // ==================== Toast System ====================
 
 let toastContainer = null;
@@ -439,34 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Export for use in page scripts
-window.adminFetch = adminFetch;
-window.formatNumber = formatNumber;
-window.formatTimestamp = formatTimestamp;
-window.formatUptime = formatUptime;
-window.formatTokenUsage = formatTokenUsage;
-window.formatRpm = formatRpm;
-window.escapeHtml = escapeHtml;
-window.safeTextContent = safeTextContent;
-window.showToast = showToast;
-window.showSuccessToast = showSuccessToast;
-window.showErrorToast = showErrorToast;
-window.showInfoToast = showInfoToast;
-window.createModal = createModal;
-window.confirmModal = confirmModal;
-window.alertModal = alertModal;
-window.closeAllModals = closeAllModals;
-window.setButtonLoading = setButtonLoading;
-window.getFormData = getFormData;
-window.clearForm = clearForm;
-window.showFormError = showFormError;
-window.clearFormErrors = clearFormErrors;
-window.setTableLoading = setTableLoading;
-window.setTableEmpty = setTableEmpty;
-window.setTableError = setTableError;
-window.renderTableRows = renderTableRows;
-window.copyToClipboard = copyToClipboard;
-window.debounce = debounce;
 // ==================== Shared Chart Helper ====================
 
 /**
@@ -606,7 +603,66 @@ function getStatusBadgeHtml(statusCode) {
     return '<span class="badge badge-neutral">HTTP ' + statusCode + '</span>';
 }
 
-// Export shared helpers
-window.renderLineChart = renderLineChart;
-window.renderRequestTable = renderRequestTable;
-window.getStatusBadgeHtml = getStatusBadgeHtml;
+// ==================== EMGAdmin Shared Namespace ====================
+// The single formal shared frontend helper contract.
+// Page scripts MUST obtain shared helpers exclusively from window.EMGAdmin.
+
+window.EMGAdmin = {
+    // Core API
+    adminFetch,
+
+    // Formatting
+    formatNumber,
+    formatTimestamp,
+    formatUptime,
+    formatTokenUsage,
+    formatRpm,
+
+    // Security
+    escapeHtml,
+    safeTextContent,
+    setValue,
+    setStatusBadge,
+
+    // Toast
+    showToast,
+    showSuccessToast,
+    showErrorToast,
+    showInfoToast,
+
+    // Modal
+    createModal,
+    confirmModal,
+    alertModal,
+    closeAllModals,
+
+    // Form
+    setButtonLoading,
+    getFormData,
+    clearForm,
+    showFormError,
+    clearFormErrors,
+
+    // Table
+    setTableLoading,
+    setTableEmpty,
+    setTableError,
+    renderTableRows,
+
+    // Clipboard
+    copyToClipboard,
+
+    // Utility
+    debounce,
+
+    // Chart
+    renderLineChart,
+
+    // Request Table
+    renderRequestTable,
+    getStatusBadgeHtml
+};
+
+// Backward-compatibility flat exports, derived from the single namespace
+// above so both contracts cannot drift apart.
+Object.assign(window, window.EMGAdmin);

@@ -2,6 +2,14 @@
  * EasyModelGate Usage Dashboard Page Logic
  */
 
+const {
+    adminFetch,
+    formatNumber,
+    formatTimestamp,
+    escapeHtml,
+    showErrorToast
+} = window.EMGAdmin;
+
 // ==================== Constants ====================
 
 const PERIOD_OPTIONS = [
